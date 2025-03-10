@@ -19,20 +19,12 @@ const (
 	Dungeon                         // 2
 )
 
-type Layer [world.MapSize][world.MapSize]rune
-
 type PlayerPosition struct {
 	X, Y int // Позиция игрока на карте
 }
 
-type GameMap struct {
-	Background Layer // Фон (например, трава или декоративные элементы)
-	Floor      Layer // Пол (пути, по которым можно ходить)
-	Objects    Layer // Объекты окружения (стены, сундуки, двери и т.д.)
-}
-
 type Game struct {
-	GameMap        GameMap
+	GameMap        world.GameMap
 	PlayerPosition PlayerPosition
 	moveDelay      int
 	startImage     *ebiten.Image

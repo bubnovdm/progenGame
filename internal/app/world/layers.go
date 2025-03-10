@@ -1,7 +1,6 @@
 package world
 
 import (
-	"github.com/bubnovdm/progenGame/internal/app/game"
 	"math/rand"
 )
 
@@ -15,8 +14,16 @@ const (
 	BackgroundSymbol = 'G'
 )
 
-func GenerateMap() game.GameMap {
-	var m game.GameMap
+type Layer [MapSize][MapSize]rune
+
+type GameMap struct {
+	Background Layer // Фон (например, трава или декоративные элементы)
+	Floor      Layer // Пол (пути, по которым можно ходить)
+	Objects    Layer // Объекты окружения (стены, сундуки, двери и т.д.)
+}
+
+func GenerateMap() GameMap {
+	var m GameMap
 
 	// Инициализируем все слои пустыми значениями
 	for i := 0; i < MapSize; i++ {
@@ -44,7 +51,7 @@ func GenerateMap() game.GameMap {
 	return m
 }
 
-func GeneratePath(m *game.GameMap, startX, startY, endX, endY int) {
+func GeneratePath(m *GameMap, startX, startY, endX, endY int) {
 	currentX, currentY := startX, startY
 	pathLength := 0
 	correctionInterval := 15 // Корректируем направление каждые 5 шагов
