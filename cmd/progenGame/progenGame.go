@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/bubnovdm/progenGame/internal/app"
+	"github.com/bubnovdm/progenGame/internal/app/game"
 )
 
 func main() {
-	app.Start()
+	game.Start()
 }
