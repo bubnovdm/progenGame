@@ -22,6 +22,8 @@ type Player struct {
 	Experience   uint32  // 4 байта, выравнивание 4
 	HP           uint16  // 2 байта, выравнивание 2
 	Mana         uint16  // 2 байта, выравнивание 2
+	X            uint8   // 1 байт, выравнивание 1
+	Y            uint8   // 1 байт, выравнивание 1
 	Level        uint8   // 1 байт, выравнивание 1
 	Strength     uint8   // 1 байт, выравнивание 1
 	Agility      uint8   // 1 байт, выравнивание 1

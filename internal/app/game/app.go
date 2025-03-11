@@ -6,6 +6,7 @@ import (
 	"github.com/bubnovdm/progenGame/internal/app/world"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"image/color"
 	"log"
 	"math/rand"
 	"time"
@@ -27,11 +28,8 @@ type Game struct {
 	GameMap        world.GameMap
 	PlayerPosition PlayerPosition
 	moveDelay      int
-	startImage     *ebiten.Image
-	exitImage      *ebiten.Image
-	pathImage      *ebiten.Image
-	emptyImage     *ebiten.Image
-	playerImage    *ebiten.Image
+	textures       map[rune]*ebiten.Image // Мапа для текстур
+	playerImage    *ebiten.Image          // Отдельное поле для игрока
 }
 
 func (g *Game) Update() error {
@@ -73,36 +71,39 @@ func (g *Game) IsWalkable(x, y int) bool {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
+	screen.Fill(color.Black)
+
+	visibleRadius := 7
+	playerX := g.PlayerPosition.X
+	playerY := g.PlayerPosition.Y
+
+	// Ограничим область отрисовки
+	minX := max(0, playerX-visibleRadius)
+	maxX := min(world.MapSize-1, playerX+visibleRadius)
+	minY := max(0, playerY-visibleRadius)
+	maxY := min(world.MapSize-1, playerY+visibleRadius)
+
 	// Отрисовка фона
-	for y, row := range g.GameMap.Background {
-		for x, cell := range row {
-			var img *ebiten.Image
-			if cell == 'G' {
-				img = g.emptyImage
+	for y := minY; y <= maxY; y++ {
+		for x := minX; x <= maxX; x++ {
+			cell := g.GameMap.Background[y][x]
+			if img, ok := g.textures[cell]; ok {
+				op := &ebiten.DrawImageOptions{}
+				op.GeoM.Translate(float64(x*25), float64(y*25))
+				screen.DrawImage(img, op)
 			}
-			op := &ebiten.DrawImageOptions{}
-			op.GeoM.Translate(float64(x*25), float64(y*25))
-			screen.DrawImage(img, op)
 		}
 	}
 
 	// Отрисовка пола
-	for y, row := range g.GameMap.Floor {
-		for x, cell := range row {
-			var img *ebiten.Image
-			switch cell {
-			case world.StartSymbol:
-				img = g.startImage
-			case world.ExitSymbol:
-				img = g.exitImage
-			case world.PathSymbol:
-				img = g.pathImage
-			default:
-				continue
+	for y := minY; y <= maxY; y++ {
+		for x := minX; x <= maxX; x++ {
+			cell := g.GameMap.Floor[y][x]
+			if img, ok := g.textures[cell]; ok {
+				op := &ebiten.DrawImageOptions{}
+				op.GeoM.Translate(float64(x*25), float64(y*25))
+				screen.DrawImage(img, op)
 			}
-			op := &ebiten.DrawImageOptions{}
-			op.GeoM.Translate(float64(x*25), float64(y*25))
-			screen.DrawImage(img, op)
 		}
 	}
 
@@ -112,39 +113,55 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	screen.DrawImage(g.playerImage, op)
 }
 
+// Вспомогательные функции
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+// Вспомогательная функция для вычисления абсолютного значения
+func abs(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
+}
+
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
 	return 1000, 1000 // Подгонка под размер карты (40x40 точек по 25 пикселей)
+}
+
+func loadImage(path string) *ebiten.Image {
+	img, _, err := ebitenutil.NewImageFromFile(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return img
 }
 
 func Start() {
 	rand.Seed(time.Now().UnixNano())
 
 	game := &Game{
-		GameMap: world.GenerateMap(),
+		GameMap:  world.GenerateMap(),
+		textures: make(map[rune]*ebiten.Image), // Инициализация мапы
 	}
 
-	// Загрузка текстур
-	var err error
-	game.startImage, _, err = ebitenutil.NewImageFromFile("assets/textures/start.png")
-	if err != nil {
-		log.Fatal(err)
-	}
-	game.exitImage, _, err = ebitenutil.NewImageFromFile("assets/textures/exit.png")
-	if err != nil {
-		log.Fatal(err)
-	}
-	game.pathImage, _, err = ebitenutil.NewImageFromFile("assets/textures/floor.png")
-	if err != nil {
-		log.Fatal(err)
-	}
-	game.emptyImage, _, err = ebitenutil.NewImageFromFile("assets/textures/empty.png")
-	if err != nil {
-		log.Fatal(err)
-	}
-	game.playerImage, _, err = ebitenutil.NewImageFromFile("assets/textures/player.png")
-	if err != nil {
-		log.Fatal(err)
-	}
+	// Загрузка текстур в мапу
+	game.textures[world.BackgroundSymbol] = loadImage("assets/textures/empty.png")
+	game.textures[world.PathSymbol] = loadImage("assets/textures/floor.png")
+	game.textures[world.StartSymbol] = loadImage("assets/textures/start.png")
+	game.textures[world.ExitSymbol] = loadImage("assets/textures/exit.png")
+	game.playerImage = loadImage("assets/textures/player.png")
 
 	// Устанавливаем игрока на начальную позицию
 	for y := 0; y < world.MapSize; y++ {
