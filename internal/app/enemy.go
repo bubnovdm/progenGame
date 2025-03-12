@@ -1,29 +1,26 @@
 package app
 
-//enemy.go
-
-type Ability struct {
-	Name     string
-	Level    int
-	Cooldown float64
-}
+import "math/rand"
 
 type Enemy struct {
-	ID        string    // Уникальный идентификатор врага
-	Name      string    // Имя врага
-	Level     uint8     // Уровень
-	Strength  uint8     // Сила
-	Defense   uint8     // Защита
-	HP        uint16    // Здоровье
-	Abilities []Ability // Умения
+	X, Y         int
+	ID           string
+	Name         string
+	HP           int
+	Strength     int
+	Agility      int
+	Intelligence int
 }
 
-type Goblin struct {
-	Enemy
-	SpecialDrop string // Особая вещь, выпадающая с Гоблина
-}
-
-type Dragon struct {
-	Enemy
-	FireBreathDamage uint16 // Урон от огненного дыхания
+func NewEnemy(x, y int, level int) Enemy {
+	return Enemy{
+		X:            x,
+		Y:            y,
+		ID:           "enemy_" + string(rand.Intn(1000)),
+		Name:         "Goblin",
+		HP:           30 + level*5,
+		Strength:     5 + level*2,
+		Agility:      5 + level*2,
+		Intelligence: 3 + level,
+	}
 }

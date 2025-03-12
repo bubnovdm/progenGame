@@ -1,0 +1,336 @@
+package app
+
+import (
+	"fmt"
+	"github.com/bubnovdm/progenGame/internal/utils"
+	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"image/color"
+	"math"
+)
+
+func (g *Game) drawCharacterSheet(screen *ebiten.Image) {
+	screen.Fill(color.Black)
+
+	// Отрисовка фонового изображения
+	if g.backgroundImage != nil {
+		geom := ebiten.GeoM{}
+		geom.Scale(1000.0/float64(g.backgroundImage.Bounds().Dx()), 1000.0/float64(g.backgroundImage.Bounds().Dy()))
+		screen.DrawImage(g.backgroundImage, &ebiten.DrawImageOptions{GeoM: geom})
+	}
+
+	// Фон для заголовка
+	titleBg := ebiten.NewImage(200, 50)
+	titleBg.Fill(color.RGBA{R: 50, G: 50, B: 50, A: 255})
+	geom := ebiten.GeoM{}
+	geom.Translate(400, 30)
+	screen.DrawImage(titleBg, &ebiten.DrawImageOptions{GeoM: geom})
+	ebitenutil.DebugPrintAt(screen, "Select character", 450, 50)
+
+	// Фон для характеристик
+	statsBg := ebiten.NewImage(300, 250)
+	statsBg.Fill(color.RGBA{R: 50, G: 50, B: 50, A: 255})
+	geom = ebiten.GeoM{}
+	geom.Translate(50, 100)
+	screen.DrawImage(statsBg, &ebiten.DrawImageOptions{GeoM: geom})
+
+	// Характеристики (слева)
+	ebitenutil.DebugPrintAt(screen, "Stats", 60, 110)
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Class: %s", g.Player.Class), 60, 140)
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Str: %d", g.Player.Strength), 60, 170)
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Agi: %d", g.Player.Agility), 60, 200)
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Int: %d", g.Player.Intelligence), 60, 230)
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("pDef: %d", g.Player.PhDefense), 60, 260)
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("mDef: %d", g.Player.MgDefense), 60, 290)
+
+	// Фон для талантов
+	talentsBg := ebiten.NewImage(300, 150)
+	talentsBg.Fill(color.RGBA{R: 50, G: 50, B: 50, A: 255})
+	geom = ebiten.GeoM{}
+	geom.Translate(50, 350)
+	screen.DrawImage(talentsBg, &ebiten.DrawImageOptions{GeoM: geom})
+
+	// Таланты (слева, ниже характеристик)
+	ebitenutil.DebugPrintAt(screen, "Talents", 60, 360)
+	for i, skill := range g.Player.Skills {
+		ebitenutil.DebugPrintAt(screen, fmt.Sprintf("%s (Lv. %d, CD: %.1f)", skill.Name, skill.Level, skill.Cooldown), 60, 390+i*30)
+	}
+
+	// Фон для инвентаря
+	inventoryBg := ebiten.NewImage(200, 200)
+	inventoryBg.Fill(color.RGBA{R: 50, G: 50, B: 50, A: 255})
+	geom = ebiten.GeoM{}
+	geom.Translate(700, 100)
+	screen.DrawImage(inventoryBg, &ebiten.DrawImageOptions{GeoM: geom})
+
+	// Инвентарь (справа)
+	ebitenutil.DebugPrintAt(screen, "Inventory", 710, 110)
+	for i := 0; i < 3; i++ {
+		for j := 0; j < 3; j++ {
+			slot := ebiten.NewImage(50, 50)
+			slot.Fill(color.RGBA{R: 100, G: 100, B: 100, A: 255})
+			geom = ebiten.GeoM{}
+			geom.Translate(float64(710+j*60), float64(130+i*60))
+			screen.DrawImage(slot, &ebiten.DrawImageOptions{GeoM: geom})
+			if i*3+j < len(g.Player.Inventory) {
+				item := g.Player.Inventory[i*3+j]
+				ebitenutil.DebugPrintAt(screen, item.Name, 710+j*60+5, 130+i*60+20)
+			}
+		}
+	}
+
+	// Изображение персонажа в центре (используем characterImages)
+	if img, ok := g.characterImages[g.Player.Class]; ok {
+		geom = ebiten.GeoM{}
+		geom.Translate(400, 300) // Центр изображения (500 - 100, 400 - 100)
+		//geom.Scale(0.75, 0.75)   // Масштабирование до 150x150 (если исходное 200x200)
+		op := &ebiten.DrawImageOptions{GeoM: geom}
+		screen.DrawImage(img, op)
+	}
+
+	// Кнопки переключения класса и "Play"
+	for _, button := range g.getCharacterSheetButtons() {
+		buttonColor := color.RGBA{R: 100, G: 100, B: 100, A: 255}
+		mx, my := ebiten.CursorPosition()
+		if mx >= button.X && mx <= button.X+button.Width &&
+			my >= button.Y && my <= button.Y+button.Height {
+			buttonColor = color.RGBA{R: 150, G: 150, B: 150, A: 255}
+		}
+		buttonImage := ebiten.NewImage(button.Width, button.Height)
+		buttonImage.Fill(buttonColor)
+		geom = ebiten.GeoM{}
+		geom.Translate(float64(button.X), float64(button.Y))
+		screen.DrawImage(buttonImage, &ebiten.DrawImageOptions{GeoM: geom})
+		ebitenutil.DebugPrintAt(screen, button.Label, button.X+10, button.Y+15)
+	}
+}
+
+func (g *Game) drawDungeon(screen *ebiten.Image) {
+	screen.Fill(color.Black)
+
+	visibleRadius := 7
+	playerX := float64(g.Player.X * 25)
+	playerY := float64(g.Player.Y * 25)
+
+	minX := utils.Max(0, int(playerX/25)-visibleRadius) * 25
+	maxX := utils.Min(MapSize-1, int(playerX/25)+visibleRadius) * 25
+	minY := utils.Max(0, int(playerY/25)-visibleRadius) * 25
+	maxY := utils.Min(MapSize-1, int(playerY/25)+visibleRadius) * 25
+
+	// Отрисовка фона с туманом войны
+	for y := minY; y <= maxY; y += 25 {
+		for x := minX; x <= maxX; x += 25 {
+			cellX := int(x / 25)
+			cellY := int(y / 25)
+			dx := float64(x) - playerX
+			dy := float64(y) - playerY
+			distance := math.Sqrt(dx*dx+dy*dy) / 25
+
+			if distance <= float64(visibleRadius) {
+				cell := g.GameMap.Background[cellY][cellX]
+				if img, ok := g.textures[cell]; ok {
+					op := &ebiten.DrawImageOptions{}
+					alpha := 1.0 - (distance / float64(visibleRadius))
+					if alpha < 0.3 {
+						alpha = 0.3
+					}
+					op.ColorScale.SetA(float32(alpha))
+					geom := ebiten.GeoM{}
+					geom.Translate(float64(x), float64(y))
+					op.GeoM = geom
+					screen.DrawImage(img, op)
+				}
+			}
+		}
+	}
+
+	// Отрисовка пола без затухания внутри радиуса
+	for y := minY; y <= maxY; y += 25 {
+		for x := minX; x <= maxX; x += 25 {
+			cellX := int(x / 25)
+			cellY := int(y / 25)
+			dx := float64(x) - playerX
+			dy := float64(y) - playerY
+			distance := math.Sqrt(dx*dx+dy*dy) / 25
+
+			if distance <= float64(visibleRadius) {
+				cell := g.GameMap.Floor[cellY][cellX]
+				if cell == EmptySymbol {
+					continue
+				}
+				if img, ok := g.textures[cell]; ok {
+					op := &ebiten.DrawImageOptions{}
+					op.ColorScale.SetA(1.0)
+					geom := ebiten.GeoM{}
+					geom.Translate(float64(x), float64(y))
+					op.GeoM = geom
+					screen.DrawImage(img, op)
+				}
+			}
+		}
+	}
+
+	// Отрисовка объектов (стены) без затухания внутри радиуса
+	for y := minY; y <= maxY; y += 25 {
+		for x := minX; x <= maxX; x += 25 {
+			cellX := int(x / 25)
+			cellY := int(y / 25)
+			dx := float64(x) - playerX
+			dy := float64(y) - playerY
+			distance := math.Sqrt(dx*dx+dy*dy) / 25
+
+			if distance <= float64(visibleRadius) {
+				cell := g.GameMap.Objects[cellY][cellX]
+				if cell == EmptySymbol {
+					continue
+				}
+				if img, ok := g.textures[cell]; ok {
+					op := &ebiten.DrawImageOptions{}
+					op.ColorScale.SetA(1.0)
+					geom := ebiten.GeoM{}
+					geom.Translate(float64(x), float64(y))
+					op.GeoM = geom
+					screen.DrawImage(img, op)
+				}
+			}
+		}
+	}
+
+	// Отрисовка врагов
+	for _, enemy := range g.Enemies {
+		dx := float64(enemy.X*25) - playerX
+		dy := float64(enemy.Y*25) - playerY
+		distance := math.Sqrt(dx*dx+dy*dy) / 25
+
+		if distance <= float64(visibleRadius) {
+			op := &ebiten.DrawImageOptions{}
+			geom := ebiten.GeoM{}
+			geom.Translate(float64(enemy.X*25), float64(enemy.Y*25))
+			op.GeoM = geom
+			screen.DrawImage(g.enemyImage, op)
+		}
+	}
+
+	// Отрисовка игрока
+	if g.playerImage != nil {
+		op := &ebiten.DrawImageOptions{}
+		geom := ebiten.GeoM{}
+		geom.Translate(playerX, playerY)
+		op.GeoM = geom
+		screen.DrawImage(g.playerImage, op)
+	}
+
+	// Отрисовка полосок HP и маны
+	const (
+		barWidth  = 200
+		barHeight = 20
+		barX      = 10
+		hpY       = 10
+		manaY     = 35
+	)
+
+	// Динамические максимумы HP и Mana
+	maxHP := 120.0
+	maxMana := 30.0
+	switch g.Player.Class {
+	case MageClass:
+		maxHP = 80.0
+		maxMana = 70.0
+	case ArcherClass:
+		maxHP = 100.0
+		maxMana = 40.0
+	}
+
+	hpRatio := float64(g.Player.HP) / maxHP
+	hpBarWidth := int(float64(barWidth) * hpRatio)
+
+	hpBackground := ebiten.NewImage(barWidth, barHeight)
+	hpBackground.Fill(color.RGBA{R: 50, G: 50, B: 50, A: 255})
+	geom := ebiten.GeoM{}
+	geom.Translate(float64(barX), float64(hpY))
+	screen.DrawImage(hpBackground, &ebiten.DrawImageOptions{GeoM: geom})
+
+	hpFill := ebiten.NewImage(hpBarWidth, barHeight)
+	hpFill.Fill(color.RGBA{R: 40, G: 170, B: 40, A: 255})
+	geom = ebiten.GeoM{}
+	geom.Translate(float64(barX), float64(hpY))
+	screen.DrawImage(hpFill, &ebiten.DrawImageOptions{GeoM: geom})
+
+	// Полоска маны (синяя)
+	manaRatio := float64(g.Player.Mana) / maxMana
+	manaBarWidth := int(float64(barWidth) * manaRatio)
+
+	manaBackground := ebiten.NewImage(barWidth, barHeight)
+	manaBackground.Fill(color.RGBA{R: 50, G: 50, B: 50, A: 255})
+	geom = ebiten.GeoM{}
+	geom.Translate(float64(barX), float64(manaY))
+	screen.DrawImage(manaBackground, &ebiten.DrawImageOptions{GeoM: geom})
+
+	manaFill := ebiten.NewImage(manaBarWidth, barHeight)
+	manaFill.Fill(color.RGBA{R: 30, G: 145, B: 170, A: 255})
+	geom = ebiten.GeoM{}
+	geom.Translate(float64(barX), float64(manaY))
+	screen.DrawImage(manaFill, &ebiten.DrawImageOptions{GeoM: geom})
+
+	// Отображение уровня по центру
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Level: %d", g.Level), 500, 15)
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("HP: %d/%d", g.Player.HP, int(maxHP)), barX+5, hpY+3)
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Mana: %d/%d", g.Player.Mana, int(maxMana)), barX+5, manaY+3)
+}
+
+func (g *Game) drawMenu(screen *ebiten.Image) {
+	// Отрисовка фонового изображения
+	if g.backgroundImage != nil {
+		geom := ebiten.GeoM{}
+		geom.Scale(1000.0/float64(g.backgroundImage.Bounds().Dx()), 1000.0/float64(g.backgroundImage.Bounds().Dy()))
+		screen.DrawImage(g.backgroundImage, &ebiten.DrawImageOptions{GeoM: geom})
+	} else {
+		screen.Fill(color.Black)
+	}
+
+	// Отрисовка кнопок
+	for _, button := range g.getMenuButtons() {
+		buttonColor := color.RGBA{R: 100, G: 100, B: 100, A: 255}
+		mx, my := ebiten.CursorPosition()
+		if mx >= button.X && mx <= button.X+button.Width &&
+			my >= button.Y && my <= button.Y+button.Height {
+			buttonColor = color.RGBA{R: 150, G: 150, B: 150, A: 255}
+		}
+		buttonImage := ebiten.NewImage(button.Width, button.Height)
+		buttonImage.Fill(buttonColor)
+		geom := ebiten.GeoM{}
+		geom.Translate(float64(button.X), float64(button.Y))
+		screen.DrawImage(buttonImage, &ebiten.DrawImageOptions{GeoM: geom})
+		ebitenutil.DebugPrintAt(screen, button.Label, button.X+50, button.Y+15)
+	}
+}
+
+func (g *Game) drawInGameMenu(screen *ebiten.Image) {
+	// Рисуем карту на фоне
+	g.drawDungeon(screen)
+
+	// Полупрозрачный фон для меню
+	overlay := ebiten.NewImage(1000, 1000)
+	overlay.Fill(color.RGBA{R: 0, G: 0, B: 0, A: 200})
+	op := &ebiten.DrawImageOptions{}
+	screen.DrawImage(overlay, op)
+
+	// Заголовок
+	ebitenutil.DebugPrintAt(screen, "Pause Menu", 450, 300)
+
+	// Отрисовка кнопок
+	for _, button := range g.getInGameMenuButtons() {
+		buttonColor := color.RGBA{R: 100, G: 100, B: 100, A: 255}
+		mx, my := ebiten.CursorPosition()
+		if mx >= button.X && mx <= button.X+button.Width &&
+			my >= button.Y && my <= button.Y+button.Height {
+			buttonColor = color.RGBA{R: 150, G: 150, B: 150, A: 255}
+		}
+		buttonImage := ebiten.NewImage(button.Width, button.Height)
+		buttonImage.Fill(buttonColor)
+		op = &ebiten.DrawImageOptions{}
+		op.GeoM.Translate(float64(button.X), float64(button.Y))
+		screen.DrawImage(buttonImage, op)
+		ebitenutil.DebugPrintAt(screen, button.Label, button.X+20, button.Y+15)
+	}
+}
