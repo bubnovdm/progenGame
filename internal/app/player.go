@@ -62,7 +62,7 @@ type Player struct {
 	Class        PlayerClass // 16 байт, выравнивание 8
 	Inventory    []Item      // 24 байта, выравнивание 8
 	Skills       []Skill     // 24 байта, выравнивание 8
-	Experience   uint32      // 4 байта, выравнивание 4
+	Experience   uint64      // 4 байта, выравнивание 4
 	HP           uint16      // 2 байта, выравнивание 2
 	MaxHP        uint16      // 2 байта, выравнивание 2
 	X            int         // 8 байт, выравнивание 8
@@ -73,6 +73,7 @@ type Player struct {
 	Intelligence uint8       // 1 байт, выравнивание 1
 	PhDefense    uint8       // 1 байт, выравнивание 1
 	MgDefense    uint8       // 1 байт, выравнивание 1
+
 }
 
 func NewPlayer(class PlayerClass) Player {
@@ -112,5 +113,49 @@ func NewPlayer(class PlayerClass) Player {
 		Skills:       []Skill{},
 		MainStat:     config.MainStat,
 		DamageType:   config.DamageType,
+	}
+}
+
+// AddExperience добавляет опыт и проверяет повышение уровня
+func (p *Player) AddExperience(exp uint64) {
+	p.Experience += exp
+	const expPerLevel = 100 // Опыт для следующего уровня
+	for p.Experience >= expPerLevel {
+		p.Experience -= expPerLevel
+		p.LevelUp()
+	}
+}
+
+// LevelUp повышает уровень и улучшает характеристики
+func (p *Player) LevelUp() {
+	p.Level++
+	switch p.Class {
+	case WarriorClass:
+		p.MaxHP += 10
+		p.HP += 10
+		p.Strength += 2
+		p.Agility += 1
+		p.Intelligence += 1
+		p.PhDefense += 3
+		p.MgDefense += 1
+	case MageClass:
+		p.MaxHP += 5
+		p.HP += 5
+		p.Strength += 1
+		p.Agility += 1
+		p.Intelligence += 3
+		p.PhDefense += 1
+		p.MgDefense += 3
+	case ArcherClass:
+		p.MaxHP += 7
+		p.HP += 7
+		p.Strength += 1
+		p.Agility += 3
+		p.Intelligence += 1
+		p.PhDefense += 2
+		p.MgDefense += 2
+	}
+	if p.HP > p.MaxHP {
+		p.HP = p.MaxHP
 	}
 }

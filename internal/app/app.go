@@ -199,7 +199,7 @@ func (g *Game) Update() error {
 		if g.AutoAttackCooldown > 0 {
 			g.AutoAttackCooldown -= 1.0 / 60.0
 		}
-		if g.AutoAttackCooldown <= 0 && g.CurrentEnemy != nil { // Добавляем проверку
+		if g.AutoAttackCooldown <= 0 && g.CurrentEnemy != nil {
 			g.autoAttack()
 			g.AutoAttackCooldown = 2.0
 		}
@@ -211,6 +211,9 @@ func (g *Game) Update() error {
 		}
 		if inpututil.IsKeyJustPressed(ebiten.Key1) {
 			g.useAbility("1")
+		}
+		if inpututil.IsKeyJustPressed(ebiten.Key2) {
+			g.useAbility("2")
 		}
 
 	case Dungeon:

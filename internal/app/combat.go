@@ -51,10 +51,6 @@ func (g *Game) useAbility(ability string) {
 		return
 	}
 
-	if g.CurrentEnemy == nil && ability != "2" { // "2" — Heal, работает вне боя
-		return
-	}
-
 	// Загружаем конфигурацию способности
 	config := GetAbilityConfigForClassAndKey(g.Player.Class.String(), ability)
 	if config == nil {
@@ -62,14 +58,22 @@ func (g *Game) useAbility(ability string) {
 		return
 	}
 
+	// Обработка лечения
 	if config.HealPercentage > 0 {
 		healAmount := uint16(float64(g.Player.MaxHP) * config.HealPercentage)
+		oldHP := g.Player.HP
 		g.Player.HP += healAmount
 		if g.Player.HP > g.Player.MaxHP {
 			g.Player.HP = g.Player.MaxHP
 		}
 		g.AbilityCooldowns[ability] = config.Cooldown
-		g.CombatLog = append(g.CombatLog, fmt.Sprintf("Used %s, healed for %d HP. Player HP: %d/%d", config.Name, healAmount, g.Player.HP, g.Player.MaxHP))
+		g.CombatLog = append(g.CombatLog, fmt.Sprintf("Used %s, healed from %d to %d HP. Player HP: %d/%d", config.Name, oldHP, g.Player.HP, g.Player.HP, g.Player.MaxHP))
+		return // Завершаем выполнение после лечения
+	}
+
+	// Проверяем наличие врага для атакующих способностей
+	if g.CurrentEnemy == nil {
+		g.CombatLog = append(g.CombatLog, "No enemy to target!")
 		return
 	}
 
