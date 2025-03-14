@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"log"
@@ -17,6 +18,20 @@ const (
 	InGameMenu
 	CombatState
 )
+
+type DotEffect struct {
+	DamagePerTick int
+	Duration      float64
+	TickInterval  float64
+	TimeRemaining float64
+}
+
+type RapidShotEffect struct {
+	DamagePerHit  int
+	HitsRemaining int
+	HitInterval   float64
+	TimeUntilNext float64
+}
 
 type Game struct {
 	GameMap               GameMap                       // Игровая карта
@@ -39,9 +54,105 @@ type Game struct {
 	AbilityCooldowns      map[string]float64            // Таймеры для способностей
 	CombatLog             []string                      // Добавляем поле для лога боя
 	combatBackgroundImage *ebiten.Image                 // Новое поле для фона боя
+	ActiveDotEffect       *DotEffect                    // Эффект урона со временем
+	ActiveRapidShot       *RapidShotEffect              // Эффект последовательных ударов
+	EnemyAttackCooldown   float64                       // Кд атак врагов
 }
 
 func (g *Game) Update() error {
+	dt := 1.0 / 60.0 // Предполагаем 60 FPS
+
+	// Обновляем кулдауны
+	if g.AutoAttackCooldown > 0 {
+		g.AutoAttackCooldown -= dt
+		if g.AutoAttackCooldown < 0 {
+			g.AutoAttackCooldown = 0
+		}
+	}
+
+	for key := range g.AbilityCooldowns {
+		if g.AbilityCooldowns[key] > 0 {
+			g.AbilityCooldowns[key] -= dt
+			if g.AbilityCooldowns[key] < 0 {
+				g.AbilityCooldowns[key] = 0
+			}
+		}
+	}
+
+	// Обработка DoT-эффекта
+	if g.ActiveDotEffect != nil && g.CurrentEnemy != nil {
+		g.ActiveDotEffect.TimeRemaining -= dt
+		if g.ActiveDotEffect.TimeRemaining <= 0 {
+			g.ActiveDotEffect = nil
+		} else {
+			g.ActiveDotEffect.TickInterval -= dt
+			if g.ActiveDotEffect.TickInterval <= 0 {
+				g.CurrentEnemy.HP -= g.ActiveDotEffect.DamagePerTick
+				g.CombatLog = append(g.CombatLog, fmt.Sprintf("%s takes %d burn damage. Enemy HP: %d", g.CurrentEnemy.Name, g.ActiveDotEffect.DamagePerTick, g.CurrentEnemy.HP))
+				g.ActiveDotEffect.TickInterval = 1.0 // Сбрасываем интервал
+				if g.CurrentEnemy.HP <= 0 {
+					g.CombatLog = append(g.CombatLog, fmt.Sprintf("%s defeated!", g.CurrentEnemy.Name))
+					enemyID := g.CurrentEnemy.ID
+					g.CurrentEnemy = nil
+					g.ActiveDotEffect = nil
+					g.ActiveRapidShot = nil
+					g.State = Dungeon
+					g.Enemies = removeEnemy(g.Enemies, enemyID)
+				}
+			}
+		}
+	}
+
+	// Обработка Rapid Shot
+	if g.ActiveRapidShot != nil && g.CurrentEnemy != nil {
+		g.ActiveRapidShot.TimeUntilNext -= dt
+		if g.ActiveRapidShot.TimeUntilNext <= 0 && g.ActiveRapidShot.HitsRemaining > 0 {
+			g.CurrentEnemy.HP -= g.ActiveRapidShot.DamagePerHit
+			g.CombatLog = append(g.CombatLog, fmt.Sprintf("Rapid Shot hits %s for %d damage. Enemy HP: %d", g.CurrentEnemy.Name, g.ActiveRapidShot.DamagePerHit, g.CurrentEnemy.HP))
+			g.ActiveRapidShot.HitsRemaining--
+			g.ActiveRapidShot.TimeUntilNext = g.ActiveRapidShot.HitInterval
+			if g.ActiveRapidShot.HitsRemaining <= 0 {
+				g.ActiveRapidShot = nil
+			}
+			if g.CurrentEnemy.HP <= 0 {
+				g.CombatLog = append(g.CombatLog, fmt.Sprintf("%s defeated!", g.CurrentEnemy.Name))
+				enemyID := g.CurrentEnemy.ID
+				g.CurrentEnemy = nil
+				g.ActiveDotEffect = nil
+				g.ActiveRapidShot = nil
+				g.State = Dungeon
+				g.Enemies = removeEnemy(g.Enemies, enemyID)
+			}
+		}
+	}
+
+	// Контратака врага
+	if g.CurrentEnemy != nil && g.State == CombatState {
+		g.EnemyAttackCooldown -= dt
+		if g.EnemyAttackCooldown <= 0 {
+			enemyDamage := int(g.CurrentEnemy.Strength)
+			var defense int
+			defense = int(g.Player.PhDefense) * 2
+			effectiveDamage := enemyDamage - defense
+			if effectiveDamage < 0 {
+				effectiveDamage = 0
+			}
+			oldHP := g.Player.HP // Сохраняем старое значение HP для отладки
+			g.Player.HP -= uint16(effectiveDamage)
+			g.CombatLog = append(g.CombatLog, fmt.Sprintf("%s counterattacks for %d damage. Player HP: %d", g.CurrentEnemy.Name, effectiveDamage, g.Player.HP))
+			fmt.Printf("Player HP changed from %d to %d\n", oldHP, g.Player.HP) // Отладка
+			g.EnemyAttackCooldown = 2.0
+			if g.Player.HP <= 0 {
+				g.CombatLog = append(g.CombatLog, "Player defeated! Game Over.")
+				g.State = Menu
+				g.Player = NewPlayer(WarriorClass)
+				g.CurrentEnemy = nil
+				g.ActiveDotEffect = nil
+				g.ActiveRapidShot = nil
+			}
+		}
+	}
+
 	switch g.State {
 	case Menu:
 		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
@@ -186,12 +297,15 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 func Start() {
 	rand.Seed(time.Now().UnixNano())
 
-	// Загружаем конфигурации перед созданием игры
+	// Загружаем конфигурации
 	if err := LoadEnemyConfigs("assets/enemies/enemies.json"); err != nil {
 		log.Fatalf("Failed to load enemy configs: %v", err)
 	}
 	if err := LoadClassConfigs("assets/classes/classes.json"); err != nil {
 		log.Fatalf("Failed to load class configs: %v", err)
+	}
+	if err := LoadAbilityConfigs("assets/abilities/abilities.json"); err != nil {
+		log.Fatalf("Failed to load ability configs: %v", err)
 	}
 
 	game := &Game{

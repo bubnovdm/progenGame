@@ -1,0 +1,59 @@
+[
+  {
+    "class": "Warrior",
+    "abilities": [
+      {
+        "key": "1",
+        "name": "Colossus Smash",
+        "multiplier": 1.5,
+        "ignore_defense": true,
+        "cooldown": 3.0
+      },
+      {
+        "key": "2",
+        "name": "Heal",
+        "heal_percentage": 0.5,
+        "cooldown": 20.0
+      }
+
+    ]
+  },
+  {
+    "class": "Mage",
+    "abilities": [
+      {
+        "key": "1",
+        "name": "Fireball",
+        "multiplier": 1.0,
+        "dot_multiplier": 1.0,
+        "dot_duration": 3.0,
+        "cooldown": 3.0
+      },
+      {
+        "key": "2",
+        "name": "Heal",
+        "heal_percentage": 0.5,
+        "cooldown": 20.0
+      }
+    ]
+  },
+  {
+    "class": "Archer",
+    "abilities": [
+      {
+        "key": "1",
+        "name": "Rapid Shot",
+        "multiplier": 0.7,
+        "hit_count": 3,
+        "hit_interval": 0.5,
+        "cooldown": 3.0
+      },
+      {
+        "key": "2",
+        "name": "Heal",
+        "heal_percentage": 0.5,
+        "cooldown": 20.0
+      }
+    ]
+  }
+]
