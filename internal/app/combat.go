@@ -51,17 +51,40 @@ func (g *Game) useAbility(ability string) {
 	case "1":
 		if g.AbilityCooldowns["BasicAttack"] <= 0 {
 			if g.CurrentEnemy != nil {
-				damage := int(g.Player.Strength) * 3
-				effectiveDamage := damage - (int(g.CurrentEnemy.PhDefense) * 2)
+				// Определяем базовый урон на основе главной характеристики (в 3 раза больше, как было)
+				var damage int
+				switch g.Player.MainStat {
+				case StrengthStat:
+					damage = int(g.Player.Strength) * 3
+				case AgilityStat:
+					damage = int(g.Player.Agility) * 3
+				case IntelligenceStat:
+					damage = int(g.Player.Intelligence) * 3
+				default:
+					damage = 5 * 3 // Запасной вариант
+				}
+
+				// Определяем защиту врага в зависимости от типа урона
+				var defense int
+				switch g.Player.DamageType {
+				case PhysicalDamage:
+					defense = int(g.CurrentEnemy.PhDefense) * 2
+				case MagicalDamage:
+					defense = int(g.CurrentEnemy.MgDefense) * 2
+				default:
+					defense = 0
+				}
+
+				effectiveDamage := damage - defense
 				if effectiveDamage < 0 {
 					effectiveDamage = 0
 				}
-				g.CurrentEnemy.HP -= effectiveDamage // Изменяем только HP
+				g.CurrentEnemy.HP -= effectiveDamage
 				g.AbilityCooldowns["BasicAttack"] = 3.0
-				g.CombatLog = append(g.CombatLog, fmt.Sprintf("Used Basic Attack for %d damage. Enemy HP: %d", effectiveDamage, g.CurrentEnemy.HP))
+				g.CombatLog = append(g.CombatLog, fmt.Sprintf("Used Basic Attack for %d %s damage. Enemy HP: %d", effectiveDamage, g.Player.DamageType, g.CurrentEnemy.HP))
 				if g.CurrentEnemy.HP <= 0 {
 					g.CombatLog = append(g.CombatLog, fmt.Sprintf("%s defeated!", g.CurrentEnemy.Name))
-					enemyID := g.CurrentEnemy.ID // Сохраняем ID перед обнулением
+					enemyID := g.CurrentEnemy.ID
 					g.CurrentEnemy = nil
 					g.State = Dungeon
 					g.Enemies = removeEnemy(g.Enemies, enemyID)

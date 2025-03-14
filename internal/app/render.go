@@ -229,16 +229,13 @@ func (g *Game) drawDungeon(screen *ebiten.Image) {
 		manaY     = 35
 	)
 
-	// Динамические максимумы HP и Mana
+	// Динамические максимумы HP
 	maxHP := 120.0
-	maxMana := 30.0
 	switch g.Player.Class {
 	case MageClass:
 		maxHP = 80.0
-		maxMana = 70.0
 	case ArcherClass:
 		maxHP = 100.0
-		maxMana = 40.0
 	}
 
 	hpRatio := float64(g.Player.HP) / maxHP
@@ -256,26 +253,9 @@ func (g *Game) drawDungeon(screen *ebiten.Image) {
 	geom.Translate(float64(barX), float64(hpY))
 	screen.DrawImage(hpFill, &ebiten.DrawImageOptions{GeoM: geom})
 
-	// Полоска маны (синяя)
-	manaRatio := float64(g.Player.Mana) / maxMana
-	manaBarWidth := int(float64(barWidth) * manaRatio)
-
-	manaBackground := ebiten.NewImage(barWidth, barHeight)
-	manaBackground.Fill(color.RGBA{R: 50, G: 50, B: 50, A: 255})
-	geom = ebiten.GeoM{}
-	geom.Translate(float64(barX), float64(manaY))
-	screen.DrawImage(manaBackground, &ebiten.DrawImageOptions{GeoM: geom})
-
-	manaFill := ebiten.NewImage(manaBarWidth, barHeight)
-	manaFill.Fill(color.RGBA{R: 30, G: 145, B: 170, A: 255})
-	geom = ebiten.GeoM{}
-	geom.Translate(float64(barX), float64(manaY))
-	screen.DrawImage(manaFill, &ebiten.DrawImageOptions{GeoM: geom})
-
 	// Отображение уровня по центру
 	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Level: %d", g.Level), 500, 15)
 	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("HP: %d/%d", g.Player.HP, int(maxHP)), barX+5, hpY+3)
-	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Mana: %d/%d", g.Player.Mana, int(maxMana)), barX+5, manaY+3)
 }
 
 func (g *Game) drawMenu(screen *ebiten.Image) {

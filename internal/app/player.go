@@ -1,14 +1,29 @@
 package app
 
+import "log"
+
 // player.go
 
-type PlayerClass string
+type PlayerClass int
 
 const (
-	WarriorClass PlayerClass = "Warrior" // Воин
-	MageClass    PlayerClass = "Mage"    // Маг
-	ArcherClass  PlayerClass = "Archer"  // Лучник
+	WarriorClass PlayerClass = 0
+	MageClass    PlayerClass = 1
+	ArcherClass  PlayerClass = 2
 )
+
+func (c PlayerClass) String() string {
+	switch c {
+	case WarriorClass:
+		return "Warrior"
+	case MageClass:
+		return "Mage"
+	case ArcherClass:
+		return "Archer"
+	default:
+		return "Unknown"
+	}
+}
 
 type Item struct {
 	ID    int
@@ -49,7 +64,6 @@ type Player struct {
 	Skills       []Skill     // 24 байта, выравнивание 8
 	Experience   uint32      // 4 байта, выравнивание 4
 	HP           uint16      // 2 байта, выравнивание 2
-	Mana         uint16      // 2 байта, выравнивание 2
 	MaxHP        uint16      // 2 байта, выравнивание 2
 	X            int         // 8 байт, выравнивание 8
 	Y            int         // 8 байт, выравнивание 8
@@ -62,57 +76,41 @@ type Player struct {
 }
 
 func NewPlayer(class PlayerClass) Player {
-	var maxHP int
-	var strength, agility, intelligence int
-	var mainStat MainStat
-	var damageType DamageType
-
-	switch class {
-	case WarriorClass:
-		maxHP = 120
-		strength = 10
-		agility = 5
-		intelligence = 5
-		mainStat = StrengthStat
-		damageType = PhysicalDamage
-	case MageClass:
-		maxHP = 80
-		strength = 5
-		agility = 5
-		intelligence = 10
-		mainStat = IntelligenceStat
-		damageType = MagicalDamage
-	case ArcherClass:
-		maxHP = 100
-		strength = 5
-		agility = 10
-		intelligence = 5
-		mainStat = AgilityStat
-		damageType = PhysicalDamage
-	default:
-		maxHP = 40
-		strength = 5
-		agility = 5
-		intelligence = 5
-		mainStat = StrengthStat
-		damageType = PhysicalDamage
+	config := GetClassConfigForType(class.String())
+	if config == nil {
+		log.Printf("Warning: No config found for class %s, using default Warrior", class.String())
+		return Player{
+			X:            0,
+			Y:            0,
+			HP:           50,
+			MaxHP:        50,
+			Strength:     10,
+			Agility:      5,
+			Intelligence: 5,
+			PhDefense:    5,
+			MgDefense:    5,
+			Class:        class,
+			Inventory:    []Item{},
+			Skills:       []Skill{},
+			MainStat:     StrengthStat,
+			DamageType:   PhysicalDamage,
+		}
 	}
 
 	return Player{
 		X:            0,
 		Y:            0,
-		HP:           uint16(maxHP),
-		MaxHP:        uint16(maxHP),
-		Mana:         30,
-		Strength:     uint8(strength),
-		Agility:      uint8(agility),
-		Intelligence: uint8(intelligence),
-		PhDefense:    5,
-		MgDefense:    5,
+		HP:           uint16(config.BaseStats.MaxHP),       // Приведение к uint16
+		MaxHP:        uint16(config.BaseStats.MaxHP),       // Приведение к uint16
+		Strength:     uint8(config.BaseStats.Strength),     // Приведение к uint8
+		Agility:      uint8(config.BaseStats.Agility),      // Приведение к uint8
+		Intelligence: uint8(config.BaseStats.Intelligence), // Приведение к uint8
+		PhDefense:    uint8(config.BaseStats.PhDefense),    // Приведение к uint8
+		MgDefense:    uint8(config.BaseStats.MgDefense),    // Приведение к uint8
 		Class:        class,
 		Inventory:    []Item{},
 		Skills:       []Skill{},
-		MainStat:     mainStat,
-		DamageType:   damageType,
+		MainStat:     config.MainStat,
+		DamageType:   config.DamageType,
 	}
 }

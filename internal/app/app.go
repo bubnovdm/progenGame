@@ -186,25 +186,27 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 func Start() {
 	rand.Seed(time.Now().UnixNano())
 
+	// Загружаем конфигурации перед созданием игры
+	if err := LoadEnemyConfigs("assets/enemies/enemies.json"); err != nil {
+		log.Fatalf("Failed to load enemy configs: %v", err)
+	}
+	if err := LoadClassConfigs("assets/classes/classes.json"); err != nil {
+		log.Fatalf("Failed to load class configs: %v", err)
+	}
+
 	game := &Game{
-		Player:           NewPlayer(WarriorClass), // По умолчанию Воин
+		Player:           NewPlayer(WarriorClass),
 		textures:         make(map[rune]*ebiten.Image),
 		Level:            1,
 		State:            Menu,
 		classes:          []PlayerClass{WarriorClass, MageClass, ArcherClass},
-		AbilityCooldowns: make(map[string]float64),
 		classImages:      make(map[PlayerClass]*ebiten.Image),
 		characterImages:  make(map[PlayerClass]*ebiten.Image),
+		AbilityCooldowns: make(map[string]float64),
+		CombatLog:        []string{},
 	}
 
-	// Загрузка ресурсов
 	loadAssets(game)
-
-	// Загружаем конфигурацию врагов
-	if err := LoadEnemyConfigs("E:\\Projects\\progenGame\\assets\\enemies\\enemies.json"); err != nil {
-		log.Fatalf("Failed to load enemy configs: %v", err)
-	}
-
 	ebiten.SetWindowSize(1000, 1000)
 	ebiten.SetWindowTitle("Map Generator")
 	if err := ebiten.RunGame(game); err != nil {
