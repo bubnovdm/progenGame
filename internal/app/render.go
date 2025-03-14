@@ -57,7 +57,7 @@ func (g *Game) drawCharacterSheet(screen *ebiten.Image) {
 	}
 
 	// Фон для инвентаря
-	inventoryBg := ebiten.NewImage(200, 200)
+	inventoryBg := ebiten.NewImage(200, 250)
 	inventoryBg.Fill(color.RGBA{R: 50, G: 50, B: 50, A: 255})
 	geom = ebiten.GeoM{}
 	geom.Translate(700, 100)
@@ -333,4 +333,104 @@ func (g *Game) drawInGameMenu(screen *ebiten.Image) {
 		screen.DrawImage(buttonImage, op)
 		ebitenutil.DebugPrintAt(screen, button.Label, button.X+20, button.Y+15)
 	}
+}
+
+func (g *Game) drawCombat(screen *ebiten.Image) {
+	// Отрисовка фона
+	if g.combatBackgroundImage != nil {
+		screen.DrawImage(g.combatBackgroundImage, &ebiten.DrawImageOptions{})
+	} else {
+		// Запасной вариант, если фон не загрузился
+		overlay := ebiten.NewImage(1000, 1000)
+		overlay.Fill(color.RGBA{R: 0, G: 0, B: 0, A: 150})
+		screen.DrawImage(overlay, &ebiten.DrawImageOptions{})
+	}
+
+	// Отрисовка персонажа (слева от центра)
+	if img, ok := g.characterImages[g.Player.Class]; ok {
+		op := &ebiten.DrawImageOptions{}
+		op.GeoM.Translate(250, 400) // X=500-250 (центр - 250)
+		screen.DrawImage(img, op)
+	}
+
+	// Отрисовка врага (справа от центра)
+	if g.CurrentEnemy != nil {
+		// Выбор изображения врага по имени
+		enemyImage, ok := g.enemyLargeImages[g.CurrentEnemy.Name]
+		if !ok || enemyImage == nil {
+			// Запасной вариант: используем изображение гоблина
+			enemyImage, ok = g.enemyLargeImages["Goblin"]
+			if !ok || enemyImage == nil {
+				// Если даже гоблина нет, пропускаем отрисовку
+				enemyImage = nil
+			}
+		}
+		if enemyImage != nil {
+			op := &ebiten.DrawImageOptions{}
+			op.GeoM.Translate(550, 400) // X=500+50 (центр + 50)
+			screen.DrawImage(enemyImage, op)
+		}
+	}
+
+	// Полоски HP
+	const barWidth, barHeight = 200, 20 // Фиксированная длина 200 пикселей
+
+	// Полоска HP персонажа
+	hpRatioPlayer := float64(g.Player.HP) / float64(g.Player.MaxHP)
+	hpBarWidthPlayer := int(float64(barWidth) * hpRatioPlayer) // Заполнение в процентах
+	hpBackgroundPlayer := ebiten.NewImage(barWidth, barHeight)
+	hpBackgroundPlayer.Fill(color.RGBA{R: 50, G: 50, B: 50, A: 255})
+	geomPlayer := ebiten.GeoM{}
+	geomPlayer.Translate(250, 350) // Над персонажем
+	screen.DrawImage(hpBackgroundPlayer, &ebiten.DrawImageOptions{GeoM: geomPlayer})
+	hpFillPlayer := ebiten.NewImage(hpBarWidthPlayer, barHeight)
+	hpFillPlayer.Fill(color.RGBA{R: 0, G: 200, B: 0, A: 255}) // Зелёный для игрока
+	geomPlayer = ebiten.GeoM{}
+	geomPlayer.Translate(250, 350)
+	screen.DrawImage(hpFillPlayer, &ebiten.DrawImageOptions{GeoM: geomPlayer})
+	// Текст HP персонажа
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("%d/%d", g.Player.HP, g.Player.MaxHP), 250, 330)
+
+	// Полоска HP врага
+	if g.CurrentEnemy != nil {
+		hpRatio := float64(g.CurrentEnemy.HP) / float64(g.CurrentEnemy.MaxHP)
+		hpBarWidth := int(float64(barWidth) * hpRatio) // Заполнение в процентах
+		hpBackground := ebiten.NewImage(barWidth, barHeight)
+		hpBackground.Fill(color.RGBA{R: 50, G: 50, B: 50, A: 255})
+		geom := ebiten.GeoM{}
+		geom.Translate(550, 350) // Над врагом
+		screen.DrawImage(hpBackground, &ebiten.DrawImageOptions{GeoM: geom})
+		hpFill := ebiten.NewImage(hpBarWidth, barHeight)
+		hpFill.Fill(color.RGBA{R: 200, G: 0, B: 0, A: 255}) // Красный для врага
+		geom = ebiten.GeoM{}
+		geom.Translate(550, 350)
+		screen.DrawImage(hpFill, &ebiten.DrawImageOptions{GeoM: geom})
+		// Текст HP и имя врага
+		ebitenutil.DebugPrintAt(screen, fmt.Sprintf("%s\n%d/%d", g.CurrentEnemy.Name, g.CurrentEnemy.HP, g.CurrentEnemy.MaxHP), 550, 310)
+	}
+
+	// Кнопки способностей (пока просто текст)
+	abilities := []string{"1: Basic Attack", "2: Skill", "3: Ult"}
+	for i, ability := range abilities {
+		ebitenutil.DebugPrintAt(screen, ability, 50, 600+i*30)
+	}
+
+	// Лог боя
+	yOffset := 700
+	for i, log := range g.CombatLog {
+		ebitenutil.DebugPrintAt(screen, log, 50, yOffset+20*int(i))
+	}
+	if len(g.CombatLog) > 5 {
+		g.CombatLog = g.CombatLog[len(g.CombatLog)-5:]
+	}
+}
+
+// Удаление врага по ID
+func removeEnemy(enemies []Enemy, id string) []Enemy {
+	for i, enemy := range enemies {
+		if enemy.ID == id {
+			return append(enemies[:i], enemies[i+1:]...)
+		}
+	}
+	return enemies
 }

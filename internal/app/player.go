@@ -22,15 +22,35 @@ type Skill struct {
 	Cooldown float64
 }
 
+// DamageType определяет тип урона
+type DamageType string
+
+const (
+	PhysicalDamage DamageType = "physical"
+	MagicalDamage  DamageType = "magical"
+)
+
+// MainStat определяет основную характеристику для урона
+type MainStat string
+
+const (
+	StrengthStat     MainStat = "strength"
+	AgilityStat      MainStat = "agility"
+	IntelligenceStat MainStat = "intelligence"
+)
+
 type Player struct {
-	ID           string      // 16 байт, выравнивание 8
-	Name         string      // 16 байт, выравнивание 8
+	ID           string // 16 байт, выравнивание 8
+	Name         string // 16 байт, выравнивание 8
+	MainStat     MainStat
+	DamageType   DamageType
 	Class        PlayerClass // 16 байт, выравнивание 8
 	Inventory    []Item      // 24 байта, выравнивание 8
 	Skills       []Skill     // 24 байта, выравнивание 8
 	Experience   uint32      // 4 байта, выравнивание 4
 	HP           uint16      // 2 байта, выравнивание 2
 	Mana         uint16      // 2 байта, выравнивание 2
+	MaxHP        uint16      // 2 байта, выравнивание 2
 	X            int         // 8 байт, выравнивание 8
 	Y            int         // 8 байт, выравнивание 8
 	Level        uint8       // 1 байт, выравнивание 1
@@ -42,62 +62,57 @@ type Player struct {
 }
 
 func NewPlayer(class PlayerClass) Player {
-	player := Player{
-		ID:         "player1",
-		Name:       "Hero",
-		Class:      class,
-		Inventory:  []Item{},
-		Skills:     []Skill{},
-		Experience: 0,
-		X:          0,
-		Y:          0,
-		Level:      1,
-	}
+	var maxHP int
+	var strength, agility, intelligence int
+	var mainStat MainStat
+	var damageType DamageType
 
-	// Инициализация характеристик в зависимости от класса
 	switch class {
 	case WarriorClass:
-		player.HP = 120
-		player.Mana = 30
-		player.Strength = 15
-		player.Agility = 8
-		player.Intelligence = 5
-		player.PhDefense = 10
-		player.MgDefense = 5
-		player.Skills = append(player.Skills, Skill{Name: "Heavy Strike", Level: 1, Cooldown: 5.0})
-		player.Inventory = append(player.Inventory,
-			Item{ID: 1, Name: "Sword", Price: 10.0},
-			Item{ID: 2, Name: "Shield", Price: 8.0},
-		)
-
+		maxHP = 120
+		strength = 10
+		agility = 5
+		intelligence = 5
+		mainStat = StrengthStat
+		damageType = PhysicalDamage
 	case MageClass:
-		player.HP = 80
-		player.Mana = 70
-		player.Strength = 5
-		player.Agility = 8
-		player.Intelligence = 15
-		player.PhDefense = 3
-		player.MgDefense = 10
-		player.Skills = append(player.Skills, Skill{Name: "Fireball", Level: 1, Cooldown: 3.0})
-		player.Inventory = append(player.Inventory,
-			Item{ID: 3, Name: "Staff", Price: 12.0},
-			Item{ID: 4, Name: "Robe", Price: 6.0},
-		)
-
+		maxHP = 80
+		strength = 5
+		agility = 5
+		intelligence = 10
+		mainStat = IntelligenceStat
+		damageType = MagicalDamage
 	case ArcherClass:
-		player.HP = 100
-		player.Mana = 40
-		player.Strength = 8
-		player.Agility = 15
-		player.Intelligence = 7
-		player.PhDefense = 5
-		player.MgDefense = 5
-		player.Skills = append(player.Skills, Skill{Name: "Rapid Shot", Level: 1, Cooldown: 4.0})
-		player.Inventory = append(player.Inventory,
-			Item{ID: 5, Name: "Bow", Price: 9.0},
-			Item{ID: 6, Name: "Quiver", Price: 5.0},
-		)
+		maxHP = 100
+		strength = 5
+		agility = 10
+		intelligence = 5
+		mainStat = AgilityStat
+		damageType = PhysicalDamage
+	default:
+		maxHP = 40
+		strength = 5
+		agility = 5
+		intelligence = 5
+		mainStat = StrengthStat
+		damageType = PhysicalDamage
 	}
 
-	return player
+	return Player{
+		X:            0,
+		Y:            0,
+		HP:           uint16(maxHP),
+		MaxHP:        uint16(maxHP),
+		Mana:         30,
+		Strength:     uint8(strength),
+		Agility:      uint8(agility),
+		Intelligence: uint8(intelligence),
+		PhDefense:    5,
+		MgDefense:    5,
+		Class:        class,
+		Inventory:    []Item{},
+		Skills:       []Skill{},
+		MainStat:     mainStat,
+		DamageType:   damageType,
+	}
 }

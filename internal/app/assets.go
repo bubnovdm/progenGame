@@ -23,7 +23,13 @@ func loadAssets(g *Game) {
 	g.textures[WallSymbol] = loadImage("assets/textures/wall.png")
 	g.enemyImage = loadImage("assets/textures/enemy.png")
 
-	// Загрузка больших изображений классов (для CharacterSheet)
+	// Загружаем большие изображения врагов
+	g.enemyLargeImages = make(map[string]*ebiten.Image)
+	g.enemyLargeImages["Goblin"] = loadImage("assets/textures/goblin_large.png")
+	g.enemyLargeImages["Golem"] = loadImage("assets/textures/golem_large.png")
+	g.enemyLargeImages["Wolf"] = loadImage("assets/textures/wolf_large.png")
+
+	// Загрузка больших изображений классов
 	g.characterImages[WarriorClass] = loadImage("assets/textures/warrior.png")
 	g.characterImages[MageClass] = loadImage("assets/textures/mage.png")
 	g.characterImages[ArcherClass] = loadImage("assets/textures/archer.png")
@@ -36,6 +42,7 @@ func loadAssets(g *Game) {
 	// Установим начальное изображение игрока для карты
 	g.playerImage = g.classImages[WarriorClass]
 
-	// Загрузка фонового изображения
+	// Загрузка фоновых изображений
 	g.backgroundImage = loadImage("assets/textures/backmenu.png")
+	g.combatBackgroundImage = loadImage("assets/textures/backcombat.png")
 }

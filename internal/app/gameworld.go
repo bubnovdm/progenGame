@@ -1,7 +1,9 @@
 package app
 
 import (
+	"fmt"
 	"github.com/bubnovdm/progenGame/internal/utils"
+	"log"
 	"math/rand"
 )
 
@@ -86,4 +88,58 @@ func (g *Game) isEnemyAt(x, y int) bool {
 		}
 	}
 	return false
+}
+
+// NewEnemy создаёт нового врага на основе уровня.
+// Если на заданном уровне доступно несколько типов врагов, выбирает случайный.
+// Если конфигурация для уровня не найдена, использует запасной вариант.
+func NewEnemy(x, y int, level int) Enemy {
+	// Находим все конфигурации врагов для текущего уровня
+	var possibleConfigs []*EnemyConfig
+	for _, config := range enemyConfigs {
+		for _, lvl := range config.Levels {
+			if lvl == level {
+				possibleConfigs = append(possibleConfigs, &config)
+				break
+			}
+		}
+	}
+
+	// Если конфигурации не найдены, используем запасной вариант
+	if len(possibleConfigs) == 0 {
+		log.Printf("Warning: No enemy config found for level %d, using default Goblin", level)
+		maxHP := 30 + (level * 5)
+		return Enemy{
+			ID:           fmt.Sprintf("enemy_%d", rand.Int()),
+			Name:         "Goblin",
+			X:            x,
+			Y:            y,
+			HP:           maxHP,
+			MaxHP:        maxHP,
+			Strength:     5,
+			Agility:      3,
+			Intelligence: 2,
+			PhDefense:    2,
+			MgDefense:    2,
+		}
+	}
+
+	// Выбираем случайного врага из доступных для уровня
+	config := possibleConfigs[rand.Intn(len(possibleConfigs))]
+
+	// Вычисляем HP с учётом уровня
+	maxHP := config.BaseStats.HP + (config.BaseStats.HPPerLevel * (level - 1))
+	return Enemy{
+		ID:           fmt.Sprintf("enemy_%d", rand.Int()),
+		Name:         config.BaseStats.Name,
+		X:            x,
+		Y:            y,
+		HP:           maxHP,
+		MaxHP:        maxHP,
+		Strength:     config.BaseStats.Strength,
+		Agility:      config.BaseStats.Agility,
+		Intelligence: config.BaseStats.Intelligence,
+		PhDefense:    config.BaseStats.PhDefense,
+		MgDefense:    config.BaseStats.MgDefense,
+	}
 }
