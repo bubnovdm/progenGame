@@ -132,10 +132,11 @@ func (g *Game) Update() error {
 		if g.EnemyAttackCooldown <= 0 {
 			enemyDamage := int(g.CurrentEnemy.Strength)
 			var defense int
-			defense = int(g.Player.PhDefense) * 2
-			effectiveDamage := enemyDamage - defense
-			if effectiveDamage < 0 {
-				effectiveDamage = 0
+			defense = int(g.Player.PhDefense) // Предполагаем, что враги наносят физический урон
+			// Новая формула: damage = strength * (100 / (100 + defense))
+			effectiveDamage := int(float64(enemyDamage) * (100.0 / (100.0 + float64(defense))))
+			if effectiveDamage < 3 {
+				effectiveDamage = 3 // Минимальный урон 3
 			}
 			oldHP := g.Player.HP // Сохраняем старое значение HP для отладки
 			g.Player.HP -= uint16(effectiveDamage)

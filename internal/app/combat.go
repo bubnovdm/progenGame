@@ -26,9 +26,10 @@ func (g *Game) autoAttack() {
 			defense = 0
 		}
 
-		effectiveDamage := damage - defense
-		if effectiveDamage < 0 {
-			effectiveDamage = 0
+		// Новая формула: damage = mainStat * (100 / (100 + defense))
+		effectiveDamage := int(float64(damage) * (100.0 / (100.0 + float64(defense))))
+		if effectiveDamage < 3 {
+			effectiveDamage = 3 // Минимальный урон 3
 		}
 
 		g.CurrentEnemy.HP -= effectiveDamage
@@ -96,16 +97,18 @@ func (g *Game) useAbility(ability string) {
 		var defense int
 		switch g.Player.DamageType {
 		case PhysicalDamage:
-			defense = int(g.CurrentEnemy.PhDefense) * 2
+			defense = int(g.CurrentEnemy.PhDefense)
 		case MagicalDamage:
-			defense = int(g.CurrentEnemy.MgDefense) * 2
+			defense = int(g.CurrentEnemy.MgDefense)
 		default:
 			defense = 0
 		}
-		effectiveDamage = damage - defense
-		if effectiveDamage < 0 {
-			effectiveDamage = 0
-		}
+		// Новая формула: damage = (mainStat * multiplier) * (100 / (100 + defense))
+		effectiveDamage = int(float64(damage) * (100.0 / (100.0 + float64(defense))))
+	}
+
+	if effectiveDamage < 1 {
+		effectiveDamage = 1 // Минимальный урон 1
 	}
 
 	// Применяем мгновенный урон
@@ -116,6 +119,21 @@ func (g *Game) useAbility(ability string) {
 	// Проверяем дополнительные эффекты
 	if config.DotDuration > 0 {
 		dotDamage := int(float64(g.Player.Intelligence) * config.DotMultiplier)
+		if !config.IgnoreDefense {
+			var defense int
+			switch g.Player.DamageType {
+			case PhysicalDamage:
+				defense = int(g.CurrentEnemy.PhDefense)
+			case MagicalDamage:
+				defense = int(g.CurrentEnemy.MgDefense)
+			default:
+				defense = 0
+			}
+			dotDamage = int(float64(dotDamage) * (100.0 / (100.0 + float64(defense))))
+		}
+		if dotDamage < 1 {
+			dotDamage = 1
+		}
 		g.ActiveDotEffect = &DotEffect{
 			DamagePerTick: dotDamage,
 			Duration:      config.DotDuration,
@@ -126,6 +144,21 @@ func (g *Game) useAbility(ability string) {
 	}
 
 	if config.HitCount > 0 {
+		if !config.IgnoreDefense {
+			var defense int
+			switch g.Player.DamageType {
+			case PhysicalDamage:
+				defense = int(g.CurrentEnemy.PhDefense)
+			case MagicalDamage:
+				defense = int(g.CurrentEnemy.MgDefense)
+			default:
+				defense = 0
+			}
+			effectiveDamage = int(float64(effectiveDamage) * (100.0 / (100.0 + float64(defense))))
+		}
+		if effectiveDamage < 1 {
+			effectiveDamage = 1
+		}
 		g.ActiveRapidShot = &RapidShotEffect{
 			DamagePerHit:  effectiveDamage,
 			HitsRemaining: config.HitCount - 1,

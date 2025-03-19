@@ -25,7 +25,7 @@
         "key": "1",
         "name": "Fireball",
         "multiplier": 1.0,
-        "dot_multiplier": 1.0,
+        "dot_multiplier": 2.0,
         "dot_duration": 3.0,
         "cooldown": 3.0
       },

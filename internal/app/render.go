@@ -390,10 +390,34 @@ func (g *Game) drawCombat(screen *ebiten.Image) {
 	}
 
 	// Кнопки способностей (пока просто текст)
-	abilities := []string{"1: Basic Attack", "2: Skill", "3: Ult"}
-	for i, ability := range abilities {
-		ebitenutil.DebugPrintAt(screen, ability, 50, 600+i*30)
+	ability1Config := GetAbilityConfigForClassAndKey(g.Player.Class.String(), "1")
+	ability1Text := "1: Basic Attack" // Значение по умолчанию
+	if ability1Config != nil {
+		ability1Text = fmt.Sprintf("1: %s", ability1Config.Name)
 	}
+
+	ability2Config := GetAbilityConfigForClassAndKey(g.Player.Class.String(), "2")
+	ability2Text := "2: Skill"
+	if ability2Config != nil {
+		ability2Text = fmt.Sprintf("2: %s", ability2Config.Name)
+	}
+
+	// Подложка под названия способностей для отслеживания кд
+	if g.AbilityCooldowns["1"] > 0 {
+		ebitenutil.DrawRect(screen, 50, 600, 150, 20, color.RGBA{255, 0, 0, 128}) // Красный фон
+	} else {
+		ebitenutil.DrawRect(screen, 50, 600, 150, 20, color.RGBA{0, 255, 0, 128}) // Зеленый фон
+	}
+
+	if g.AbilityCooldowns["2"] > 0 {
+		ebitenutil.DrawRect(screen, 50, 630, 150, 20, color.RGBA{255, 0, 0, 128}) // Красный фон
+	} else {
+		ebitenutil.DrawRect(screen, 50, 630, 150, 20, color.RGBA{0, 255, 0, 128}) // Зеленый фон
+	}
+
+	ebitenutil.DebugPrintAt(screen, ability1Text, 50, 600)
+	ebitenutil.DebugPrintAt(screen, ability2Text, 50, 630)
+	ebitenutil.DebugPrintAt(screen, "3: Ult", 50, 660) // Пока оставим как есть
 
 	// Лог боя
 	yOffset := 700
