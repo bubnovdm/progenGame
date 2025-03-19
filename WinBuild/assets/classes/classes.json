@@ -1,0 +1,65 @@
+[
+  {
+    "type": "Warrior",
+    "base_stats": {
+      "max_hp": 120,
+      "strength": 10,
+      "agility": 5,
+      "intelligence": 5,
+      "ph_defense": 7,
+      "mg_defense": 3
+    },
+    "main_stat": "strength",
+    "damage_type": "physical",
+    "level_up_stats": {
+      "max_hp": 12,
+      "strength": 2,
+      "agility": 1,
+      "intelligence": 1,
+      "ph_defense": 3,
+      "mg_defense": 1
+    }
+  },
+  {
+    "type": "Mage",
+    "base_stats": {
+      "max_hp": 80,
+      "strength": 5,
+      "agility": 5,
+      "intelligence": 10,
+      "ph_defense": 3,
+      "mg_defense": 7
+    },
+    "main_stat": "intelligence",
+    "damage_type": "magical",
+    "level_up_stats": {
+      "max_hp": 8,
+      "strength": 1,
+      "agility": 1,
+      "intelligence": 2,
+      "ph_defense": 1,
+      "mg_defense": 3
+    }
+  },
+  {
+    "type": "Archer",
+    "base_stats": {
+      "max_hp": 100,
+      "strength": 5,
+      "agility": 10,
+      "intelligence": 5,
+      "ph_defense": 5,
+      "mg_defense": 5
+    },
+    "main_stat": "agility",
+    "damage_type": "physical",
+    "level_up_stats": {
+      "max_hp": 10,
+      "strength": 1,
+      "agility": 2,
+      "intelligence": 1,
+      "ph_defense": 2,
+      "mg_defense": 2
+    }
+  }
+]

@@ -13,7 +13,15 @@
         "key": "2",
         "name": "Heal",
         "heal_percentage": 0.5,
-        "cooldown": 20.0
+        "cooldown": 15.0
+      },
+      {
+        "key": "3",
+        "name": "Mortal Bleed",
+        "multiplier": 0.2,
+        "dot_multiplier": 6.0,
+        "dot_duration": 10.0,
+        "cooldown": 10
       }
 
     ]
@@ -25,15 +33,15 @@
         "key": "1",
         "name": "Fireball",
         "multiplier": 1.0,
-        "dot_multiplier": 2.0,
-        "dot_duration": 3.0,
+        "dot_multiplier": 1.8,
+        "dot_duration": 5.0,
         "cooldown": 3.0
       },
       {
         "key": "2",
         "name": "Heal",
         "heal_percentage": 0.5,
-        "cooldown": 20.0
+        "cooldown": 15.0
       }
     ]
   },
@@ -43,7 +51,7 @@
       {
         "key": "1",
         "name": "Rapid Shot",
-        "multiplier": 0.7,
+        "multiplier": 0.85,
         "hit_count": 3,
         "hit_interval": 0.5,
         "cooldown": 3.0
@@ -52,7 +60,7 @@
         "key": "2",
         "name": "Heal",
         "heal_percentage": 0.5,
-        "cooldown": 20.0
+        "cooldown": 15.0
       }
     ]
   }

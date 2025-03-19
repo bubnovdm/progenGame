@@ -1,0 +1,44 @@
+[
+  {
+    "type": "Goblin",
+    "levels": [1, 2, 3],
+    "base_stats": {
+      "name": "Goblin",
+      "hp": 30,
+      "hp_per_level": 5,
+      "strength": 5,
+      "agility": 3,
+      "intelligence": 2,
+      "ph_defense": 2,
+      "mg_defense": 2
+    }
+  },
+  {
+    "type": "Wolf",
+    "levels": [1, 2],
+    "base_stats": {
+      "name": "Wolf",
+      "hp": 25,
+      "hp_per_level": 4,
+      "strength": 6,
+      "agility": 5,
+      "intelligence": 1,
+      "ph_defense": 1,
+      "mg_defense": 1
+    }
+  },
+  {
+    "type": "Golem",
+    "levels": [3, 4, 5, 6],
+    "base_stats": {
+      "name": "Golem",
+      "hp": 50,
+      "hp_per_level": 10,
+      "strength": 8,
+      "agility": 2,
+      "intelligence": 1,
+      "ph_defense": 5,
+      "mg_defense": 3
+    }
+  }
+]

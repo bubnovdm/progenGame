@@ -57,6 +57,7 @@ type Game struct {
 	ActiveDotEffect       *DotEffect                    // Эффект урона со временем
 	ActiveRapidShot       *RapidShotEffect              // Эффект последовательных ударов
 	EnemyAttackCooldown   float64                       // Кд атак врагов
+	ClassConfig           map[string]ClassConfig        // Мапа для классовых конфигов
 }
 
 func (g *Game) Update() error {
@@ -92,12 +93,12 @@ func (g *Game) Update() error {
 				g.ActiveDotEffect.TickInterval = 1.0 // Сбрасываем интервал
 				if g.CurrentEnemy.HP <= 0 {
 					g.CombatLog = append(g.CombatLog, fmt.Sprintf("%s defeated!", g.CurrentEnemy.Name))
-					enemyID := g.CurrentEnemy.ID
+					g.Player.AddExperience(20, g)
+					g.Enemies = removeEnemy(g.Enemies, g.CurrentEnemy.ID)
 					g.CurrentEnemy = nil
 					g.ActiveDotEffect = nil
 					g.ActiveRapidShot = nil
 					g.State = Dungeon
-					g.Enemies = removeEnemy(g.Enemies, enemyID)
 				}
 			}
 		}
@@ -116,12 +117,12 @@ func (g *Game) Update() error {
 			}
 			if g.CurrentEnemy.HP <= 0 {
 				g.CombatLog = append(g.CombatLog, fmt.Sprintf("%s defeated!", g.CurrentEnemy.Name))
-				enemyID := g.CurrentEnemy.ID
+				g.Player.AddExperience(20, g)
+				g.Enemies = removeEnemy(g.Enemies, g.CurrentEnemy.ID)
 				g.CurrentEnemy = nil
 				g.ActiveDotEffect = nil
 				g.ActiveRapidShot = nil
 				g.State = Dungeon
-				g.Enemies = removeEnemy(g.Enemies, enemyID)
 			}
 		}
 	}
@@ -146,7 +147,7 @@ func (g *Game) Update() error {
 			if g.Player.HP <= 0 {
 				g.CombatLog = append(g.CombatLog, "Player defeated! Game Over.")
 				g.State = Menu
-				g.Player = NewPlayer(WarriorClass)
+				g.Player = NewPlayer(WarriorClass, g)
 				g.CurrentEnemy = nil
 				g.ActiveDotEffect = nil
 				g.ActiveRapidShot = nil
@@ -313,7 +314,6 @@ func Start() {
 	}
 
 	game := &Game{
-		Player:           NewPlayer(WarriorClass),
 		textures:         make(map[rune]*ebiten.Image),
 		Level:            1,
 		State:            Menu,
@@ -322,7 +322,12 @@ func Start() {
 		characterImages:  make(map[PlayerClass]*ebiten.Image),
 		AbilityCooldowns: make(map[string]float64),
 		CombatLog:        []string{},
+		enemyLargeImages: make(map[string]*ebiten.Image),
+		ClassConfig:      ToMap(),
 	}
+
+	// Устанавливаем игрока после создания game
+	game.Player = NewPlayer(WarriorClass, game)
 
 	loadAssets(game)
 	ebiten.SetWindowSize(1000, 1000)

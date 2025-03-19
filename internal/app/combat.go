@@ -36,12 +36,12 @@ func (g *Game) autoAttack() {
 		g.CombatLog = append(g.CombatLog, fmt.Sprintf("Autoattack hits %s for %d %s damage. Enemy HP: %d", g.CurrentEnemy.Name, effectiveDamage, g.Player.DamageType, g.CurrentEnemy.HP))
 		if g.CurrentEnemy.HP <= 0 {
 			g.CombatLog = append(g.CombatLog, fmt.Sprintf("%s defeated!", g.CurrentEnemy.Name))
-			enemyID := g.CurrentEnemy.ID
+			g.Player.AddExperience(20, g) // +10 опыта за врага
+			g.Enemies = removeEnemy(g.Enemies, g.CurrentEnemy.ID)
 			g.CurrentEnemy = nil
 			g.ActiveDotEffect = nil
 			g.ActiveRapidShot = nil
 			g.State = Dungeon
-			g.Enemies = removeEnemy(g.Enemies, enemyID)
 		}
 	}
 }
@@ -123,13 +123,13 @@ func (g *Game) useAbility(ability string) {
 			var defense int
 			switch g.Player.DamageType {
 			case PhysicalDamage:
-				defense = int(g.CurrentEnemy.PhDefense)
+				defense = g.CurrentEnemy.PhDefense
 			case MagicalDamage:
-				defense = int(g.CurrentEnemy.MgDefense)
+				defense = g.CurrentEnemy.MgDefense
 			default:
 				defense = 0
 			}
-			dotDamage = int(float64(dotDamage) * (100.0 / (100.0 + float64(defense))))
+			dotDamage = int(float64(dotDamage) * (100.0 / (100.0 + float64(defense))) / config.DotDuration)
 		}
 		if dotDamage < 1 {
 			dotDamage = 1
@@ -169,11 +169,11 @@ func (g *Game) useAbility(ability string) {
 
 	if g.CurrentEnemy.HP <= 0 {
 		g.CombatLog = append(g.CombatLog, fmt.Sprintf("%s defeated!", g.CurrentEnemy.Name))
-		enemyID := g.CurrentEnemy.ID
+		g.Player.AddExperience(20, g) // +10 опыта за врага
+		g.Enemies = removeEnemy(g.Enemies, g.CurrentEnemy.ID)
 		g.CurrentEnemy = nil
 		g.ActiveDotEffect = nil
 		g.ActiveRapidShot = nil
 		g.State = Dungeon
-		g.Enemies = removeEnemy(g.Enemies, enemyID)
 	}
 }

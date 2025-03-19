@@ -1,6 +1,6 @@
 package app
 
-import "log"
+import "fmt"
 
 // player.go
 
@@ -62,7 +62,7 @@ type Player struct {
 	Class        PlayerClass // 16 байт, выравнивание 8
 	Inventory    []Item      // 24 байта, выравнивание 8
 	Skills       []Skill     // 24 байта, выравнивание 8
-	Experience   uint64      // 4 байта, выравнивание 4
+	Experience   uint8       // 1 байта, выравнивание 1
 	HP           uint16      // 2 байта, выравнивание 2
 	MaxHP        uint16      // 2 байта, выравнивание 2
 	X            int         // 8 байт, выравнивание 8
@@ -76,85 +76,84 @@ type Player struct {
 
 }
 
-func NewPlayer(class PlayerClass) Player {
-	config := GetClassConfigForType(class.String())
-	if config == nil {
-		log.Printf("Warning: No config found for class %s, using default Warrior", class.String())
-		return Player{
-			X:            0,
-			Y:            0,
-			HP:           50,
-			MaxHP:        50,
-			Strength:     10,
-			Agility:      5,
-			Intelligence: 5,
-			PhDefense:    5,
-			MgDefense:    5,
-			Class:        class,
-			Inventory:    []Item{},
-			Skills:       []Skill{},
-			MainStat:     StrengthStat,
-			DamageType:   PhysicalDamage,
+func NewPlayer(class PlayerClass, g *Game) Player {
+	// Получаем конфигурацию класса из g.ClassConfig
+	var classConfig ClassConfig
+	if g != nil {
+		var ok bool
+		classConfig, ok = g.ClassConfig[class.String()]
+		if !ok {
+			// Если класс не найден, используем Warrior по умолчанию
+			classConfig = g.ClassConfig["Warrior"]
+		}
+	} else {
+		// Если g == nil, используем значения по умолчанию
+		classConfig = ClassConfig{
+			Type: class.String(),
+			BaseStats: ClassStats{
+				MaxHP:        120,
+				Strength:     10,
+				Agility:      5,
+				Intelligence: 5,
+				PhDefense:    7,
+				MgDefense:    3,
+			},
 		}
 	}
 
+	baseStats := classConfig.BaseStats
 	return Player{
-		X:            0,
-		Y:            0,
-		HP:           uint16(config.BaseStats.MaxHP),       // Приведение к uint16
-		MaxHP:        uint16(config.BaseStats.MaxHP),       // Приведение к uint16
-		Strength:     uint8(config.BaseStats.Strength),     // Приведение к uint8
-		Agility:      uint8(config.BaseStats.Agility),      // Приведение к uint8
-		Intelligence: uint8(config.BaseStats.Intelligence), // Приведение к uint8
-		PhDefense:    uint8(config.BaseStats.PhDefense),    // Приведение к uint8
-		MgDefense:    uint8(config.BaseStats.MgDefense),    // Приведение к uint8
 		Class:        class,
+		Level:        1,
+		Experience:   0,
+		HP:           uint16(baseStats.MaxHP),
+		MaxHP:        uint16(baseStats.MaxHP),
+		Strength:     uint8(baseStats.Strength),
+		Agility:      uint8(baseStats.Agility),
+		Intelligence: uint8(baseStats.Intelligence),
+		PhDefense:    uint8(baseStats.PhDefense),
+		MgDefense:    uint8(baseStats.MgDefense),
+		X:            1,
+		Y:            1,
 		Inventory:    []Item{},
 		Skills:       []Skill{},
-		MainStat:     config.MainStat,
-		DamageType:   config.DamageType,
 	}
 }
 
 // AddExperience добавляет опыт и проверяет повышение уровня
-func (p *Player) AddExperience(exp uint64) {
+func (p *Player) AddExperience(exp uint8, g *Game) string {
 	p.Experience += exp
-	const expPerLevel = 100 // Опыт для следующего уровня
-	for p.Experience >= expPerLevel {
-		p.Experience -= expPerLevel
-		p.LevelUp()
+	// Проверка на повышение уровня
+	if p.Experience >= 100 {
+		p.Experience -= 100
+		p.LevelUp(g)
+		return fmt.Sprintf("Level Up! You are now level %d", p.Level)
 	}
+	return ""
 }
 
 // LevelUp повышает уровень и улучшает характеристики
-func (p *Player) LevelUp() {
+func (p *Player) LevelUp(g *Game) {
 	p.Level++
-	switch p.Class {
-	case WarriorClass:
-		p.MaxHP += 10
-		p.HP += 10
-		p.Strength += 2
-		p.Agility += 1
-		p.Intelligence += 1
-		p.PhDefense += 3
-		p.MgDefense += 1
-	case MageClass:
-		p.MaxHP += 5
-		p.HP += 5
-		p.Strength += 1
-		p.Agility += 1
-		p.Intelligence += 3
-		p.PhDefense += 1
-		p.MgDefense += 3
-	case ArcherClass:
-		p.MaxHP += 7
-		p.HP += 7
-		p.Strength += 1
-		p.Agility += 3
-		p.Intelligence += 1
-		p.PhDefense += 2
-		p.MgDefense += 2
+
+	// Получаем конфигурацию класса
+	classConfig, ok := g.ClassConfig[p.Class.String()]
+	if !ok {
+		// Если класс не найден, используем значения по умолчанию (например, Warrior)
+		classConfig = g.ClassConfig["Warrior"]
 	}
+
+	// Применяем прирост характеристик из level_up_stats
+	levelUpStats := classConfig.LevelUpStats
+	p.MaxHP += uint16(levelUpStats.MaxHP)
+	p.HP += uint16(levelUpStats.MaxHP)
+	p.Strength += uint8(levelUpStats.Strength)
+	p.Agility += uint8(levelUpStats.Agility)
+	p.Intelligence += uint8(levelUpStats.Intelligence)
+	p.PhDefense += uint8(levelUpStats.PhDefense)
+	p.MgDefense += uint8(levelUpStats.MgDefense)
+
+	// Убедимся, что HP не превышает MaxHP
 	if p.HP > p.MaxHP {
 		p.HP = p.MaxHP
 	}

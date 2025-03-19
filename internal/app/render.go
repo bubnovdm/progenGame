@@ -220,26 +220,21 @@ func (g *Game) drawDungeon(screen *ebiten.Image) {
 		screen.DrawImage(g.playerImage, op)
 	}
 
-	// Отрисовка полосок HP и маны
+	// Отрисовка полосок HP и опыта
 	const (
 		barWidth  = 200
 		barHeight = 20
 		barX      = 10
 		hpY       = 10
-		manaY     = 35
+		expY      = 35 // Полоска опыта ниже HP
 	)
 
-	// Динамические максимумы HP
-	maxHP := 120.0
-	switch g.Player.Class {
-	case MageClass:
-		maxHP = 80.0
-	case ArcherClass:
-		maxHP = 100.0
-	}
-
-	hpRatio := float64(g.Player.HP) / maxHP
+	// Полоска HP
+	hpRatio := float64(g.Player.HP) / float64(g.Player.MaxHP) // Используем g.Player.MaxHP
 	hpBarWidth := int(float64(barWidth) * hpRatio)
+	if hpBarWidth < 1 {
+		hpBarWidth = 1 // Минимальная ширина 1 пиксель
+	}
 
 	hpBackground := ebiten.NewImage(barWidth, barHeight)
 	hpBackground.Fill(color.RGBA{R: 50, G: 50, B: 50, A: 255})
@@ -253,9 +248,32 @@ func (g *Game) drawDungeon(screen *ebiten.Image) {
 	geom.Translate(float64(barX), float64(hpY))
 	screen.DrawImage(hpFill, &ebiten.DrawImageOptions{GeoM: geom})
 
-	// Отображение уровня по центру
-	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Level: %d", g.Level), 500, 15)
-	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("HP: %d/%d", g.Player.HP, int(maxHP)), barX+5, hpY+3)
+	// Полоска опыта
+	const expPerLevel = 100 // Опыт для следующего уровня
+	expRatio := float64(g.Player.Experience) / float64(expPerLevel)
+	expBarWidth := int(float64(barWidth) * expRatio)
+	if expBarWidth < 1 {
+		expBarWidth = 1 // Минимальная ширина 1 пиксель
+	}
+
+	expBackground := ebiten.NewImage(barWidth, barHeight)
+	expBackground.Fill(color.RGBA{R: 50, G: 50, B: 50, A: 255})
+	geom = ebiten.GeoM{}
+	geom.Translate(float64(barX), float64(expY))
+	screen.DrawImage(expBackground, &ebiten.DrawImageOptions{GeoM: geom})
+
+	expFill := ebiten.NewImage(expBarWidth, barHeight)
+	expFill.Fill(color.RGBA{R: 0, G: 255, B: 215, A: 255}) // Голубой цвет для опыта
+	geom = ebiten.GeoM{}
+	geom.Translate(float64(barX), float64(expY))
+	screen.DrawImage(expFill, &ebiten.DrawImageOptions{GeoM: geom})
+
+	// Текст для HP и опыта
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("HP: %d/%d", g.Player.HP, g.Player.MaxHP), barX+5, hpY+3) // Используем g.Player.MaxHP
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Level: %d (Exp: %d/%d)", g.Player.Level, g.Player.Experience, expPerLevel), barX+5, expY+3)
+
+	// Отображение уровня по центру (имеется в виду этаж, а не уровень персонажа)
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Floor: %d", g.Level), 500, 15)
 }
 
 func (g *Game) drawMenu(screen *ebiten.Image) {
@@ -352,12 +370,15 @@ func (g *Game) drawCombat(screen *ebiten.Image) {
 		}
 	}
 
-	// Полоски HP
+	// Полоски HP и опыта
 	const barWidth, barHeight = 200, 20 // Фиксированная длина 200 пикселей
 
 	// Полоска HP персонажа
 	hpRatioPlayer := float64(g.Player.HP) / float64(g.Player.MaxHP)
 	hpBarWidthPlayer := int(float64(barWidth) * hpRatioPlayer) // Заполнение в процентах
+	if hpBarWidthPlayer < 1 {
+		hpBarWidthPlayer = 1 // Минимальная ширина 1 пиксель
+	}
 	hpBackgroundPlayer := ebiten.NewImage(barWidth, barHeight)
 	hpBackgroundPlayer.Fill(color.RGBA{R: 50, G: 50, B: 50, A: 255})
 	geomPlayer := ebiten.GeoM{}
@@ -371,10 +392,33 @@ func (g *Game) drawCombat(screen *ebiten.Image) {
 	// Текст HP персонажа
 	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("%d/%d", g.Player.HP, g.Player.MaxHP), 250, 330)
 
+	// Полоска опыта персонажа
+	const expPerLevel = 100 // Опыт для следующего уровня
+	expRatio := float64(g.Player.Experience) / float64(expPerLevel)
+	expBarWidth := int(float64(barWidth) * expRatio)
+	if expBarWidth < 1 {
+		expBarWidth = 1 // Минимальная ширина 1 пиксель
+	}
+	expBackground := ebiten.NewImage(barWidth, barHeight)
+	expBackground.Fill(color.RGBA{R: 50, G: 50, B: 50, A: 255})
+	geomExp := ebiten.GeoM{}
+	geomExp.Translate(250, 380) // Под полоской HP
+	screen.DrawImage(expBackground, &ebiten.DrawImageOptions{GeoM: geomExp})
+	expFill := ebiten.NewImage(expBarWidth, barHeight)
+	expFill.Fill(color.RGBA{R: 0, G: 255, B: 215, A: 255}) // Желтый цвет для опыта
+	geomExp = ebiten.GeoM{}
+	geomExp.Translate(250, 380)
+	screen.DrawImage(expFill, &ebiten.DrawImageOptions{GeoM: geomExp})
+	// Текст уровня и опыта
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Level: %d (Exp: %d/%d)", g.Player.Level, g.Player.Experience, expPerLevel), 250, 383)
+
 	// Полоска HP врага
 	if g.CurrentEnemy != nil {
 		hpRatio := float64(g.CurrentEnemy.HP) / float64(g.CurrentEnemy.MaxHP)
 		hpBarWidth := int(float64(barWidth) * hpRatio) // Заполнение в процентах
+		if hpBarWidth < 1 {
+			hpBarWidth = 1 // Минимальная ширина 1 пиксель
+		}
 		hpBackground := ebiten.NewImage(barWidth, barHeight)
 		hpBackground.Fill(color.RGBA{R: 50, G: 50, B: 50, A: 255})
 		geom := ebiten.GeoM{}

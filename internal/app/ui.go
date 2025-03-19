@@ -21,9 +21,9 @@ func (g *Game) getMenuButtons() []Button {
 			Label:  "New Game",
 			Action: func(g *Game) {
 				g.Level = 1
-				g.selectedClassIndex = 0                              // По умолчанию первый класс (Воин)
-				g.Player = NewPlayer(g.classes[g.selectedClassIndex]) // Сбрасываем характеристики
-				g.Player.X = 0                                        // Устанавливаем начальные координаты
+				g.selectedClassIndex = 0                                 // По умолчанию первый класс (Воин)
+				g.Player = NewPlayer(g.classes[g.selectedClassIndex], g) // Сбрасываем характеристики
+				g.Player.X = 0                                           // Устанавливаем начальные координаты
 				g.Player.Y = 0
 				g.State = CharacterSheet
 			},
@@ -85,7 +85,7 @@ func (g *Game) getCharacterSheetButtons() []Button {
 			Label:  "<",
 			Action: func(g *Game) {
 				g.selectedClassIndex = (g.selectedClassIndex - 1 + len(g.classes)) % len(g.classes)
-				tempPlayer := NewPlayer(g.classes[g.selectedClassIndex])
+				tempPlayer := NewPlayer(g.classes[g.selectedClassIndex], g)
 				g.Player = tempPlayer // Полное обновление игрока, включая Inventory
 				g.Player.X = currentX // Восстанавливаем координаты
 				g.Player.Y = currentY
@@ -100,7 +100,7 @@ func (g *Game) getCharacterSheetButtons() []Button {
 			Label:  ">",
 			Action: func(g *Game) {
 				g.selectedClassIndex = (g.selectedClassIndex + 1) % len(g.classes)
-				tempPlayer := NewPlayer(g.classes[g.selectedClassIndex])
+				tempPlayer := NewPlayer(g.classes[g.selectedClassIndex], g)
 				g.Player = tempPlayer // Полное обновление игрока, включая Inventory
 				g.Player.X = currentX // Восстанавливаем координаты
 				g.Player.Y = currentY
