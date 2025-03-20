@@ -431,6 +431,54 @@ func (g *Game) drawCombat(screen *ebiten.Image) {
 		screen.DrawImage(hpFill, &ebiten.DrawImageOptions{GeoM: geom})
 		// Текст HP и имя врага
 		ebitenutil.DebugPrintAt(screen, fmt.Sprintf("%s\n%d/%d", g.CurrentEnemy.Name, g.CurrentEnemy.HP, g.CurrentEnemy.MaxHP), 550, 310)
+
+		// Полоски для DoT-эффектов
+		const dotBarHeight = 10        // Высота полоски DoT (меньше, чем у HP)
+		yOffset := 350 + barHeight + 5 // Начальная позиция Y для первой полоски DoT (сразу под HP с отступом 5 пикселей)
+
+		for _, effect := range g.CurrentEnemy.ActiveEffects {
+			// Проверяем, является ли эффект DoT (по имени или типу)
+			if dotEffect, ok := effect.(*DotEffect); ok {
+				// Рассчитываем прогресс эффекта
+				dotRatio := dotEffect.TimeRemaining / dotEffect.Duration
+				if dotRatio < 0 {
+					dotRatio = 0
+				}
+				dotBarWidth := int(float64(barWidth) * dotRatio)
+				if dotBarWidth < 1 {
+					dotBarWidth = 1 // Минимальная ширина 1 пиксель
+				}
+
+				// Фон полоски DoT
+				dotBackground := ebiten.NewImage(barWidth, dotBarHeight)
+				dotBackground.Fill(color.RGBA{R: 50, G: 50, B: 50, A: 255})
+				geom := ebiten.GeoM{}
+				geom.Translate(550, float64(yOffset))
+				screen.DrawImage(dotBackground, &ebiten.DrawImageOptions{GeoM: geom})
+
+				// Заполнение полоски DoT (например, фиолетовый цвет для DoT)
+				dotFill := ebiten.NewImage(dotBarWidth, dotBarHeight)
+				dotColor := color.RGBA{R: 128, G: 0, B: 128, A: 255} // Фиолетовый по умолчанию
+				switch dotEffect.Name {
+				case "Poison":
+					dotColor = color.RGBA{R: 0, G: 128, B: 0, A: 255} // Зеленый для яда
+				case "Burn":
+					dotColor = color.RGBA{R: 255, G: 69, B: 0, A: 255} // Оранжевый для горения
+				case "Bleed":
+					dotColor = color.RGBA{R: 200, G: 0, B: 0, A: 255} // Красный для кровотечения
+				}
+				dotFill.Fill(dotColor)
+				geom = ebiten.GeoM{}
+				geom.Translate(550, float64(yOffset))
+				screen.DrawImage(dotFill, &ebiten.DrawImageOptions{GeoM: geom})
+
+				// Текст с названием эффекта и оставшимся временем
+				ebitenutil.DebugPrintAt(screen, fmt.Sprintf("%s: %.1fs", dotEffect.Name, dotEffect.TimeRemaining), 550, yOffset+2)
+
+				// Сдвигаем Y для следующей полоски
+				yOffset += dotBarHeight + 5 // Отступ между полосками
+			}
+		}
 	}
 
 	// Кнопки способностей (пока просто текст)

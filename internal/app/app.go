@@ -45,7 +45,12 @@ type Game struct {
 }
 
 func (g *Game) Update() error {
-	dt := 1.0 / 60.0 // Предполагаем 60 FPS
+	// Рассчитываем dt на основе реального времени
+	tps := ebiten.ActualTPS()
+	if tps == 0 {
+		tps = 144.0 // Значение по умолчанию, если TPS ещё не определён
+	}
+	dt := 1.0 / tps
 
 	// Обновляем кулдауны
 	if g.AutoAttackCooldown > 0 {

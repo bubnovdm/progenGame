@@ -151,7 +151,7 @@ func (g *Game) useAbility(ability string) {
 		// Определяем имя эффекта в зависимости от класса
 		dotName := config.DotName
 		if dotName == "" {
-			dotName = "Burn" // Значение по умолчанию
+			dotName = "DOT" // Значение по умолчанию
 		}
 
 		dotEffect := &DotEffect{
