@@ -8,16 +8,18 @@ import (
 
 // AbilityConfig описывает параметры способности
 type AbilityConfig struct {
+	Class          string  `json:"class"`
 	Key            string  `json:"key"`
 	Name           string  `json:"name"`
 	Multiplier     float64 `json:"multiplier"`
-	IgnoreDefense  bool    `json:"ignore_defense,omitempty"`
-	DotMultiplier  float64 `json:"dot_multiplier,omitempty"`
-	DotDuration    float64 `json:"dot_duration,omitempty"`
-	HitCount       int     `json:"hit_count,omitempty"`
-	HitInterval    float64 `json:"hit_interval,omitempty"`
-	HealPercentage float64 `json:"heal_percentage,omitempty"`
 	Cooldown       float64 `json:"cooldown"`
+	DotDuration    float64 `json:"dot_duration"`
+	DotMultiplier  float64 `json:"dot_multiplier"`
+	DotName        string  `json:"dot_name"` // Новое поле
+	HitCount       int     `json:"hit_count"`
+	HitInterval    float64 `json:"hit_interval"`
+	IgnoreDefense  bool    `json:"ignore_defense"`
+	HealPercentage float64 `json:"heal_percentage"`
 }
 
 // ClassAbilityConfig описывает способности для класса

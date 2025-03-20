@@ -9,13 +9,6 @@ import (
 	"time"
 )
 
-// Надо переработать DOT-ы через интерфейсы, т.к. поведение у них одно
-// Effect описывает поведение эффекта, который применяется к цели
-type Effect interface {
-	Update(dt float64, target *Enemy, g *Game) (logMessage string) // Обновляет эффект и возвращает сообщение для лога
-	IsFinished() bool                                              // Возвращает true, если эффект завершён
-}
-
 type GameState uint8
 
 const (
@@ -25,20 +18,6 @@ const (
 	InGameMenu
 	CombatState
 )
-
-type DotEffect struct {
-	DamagePerTick int
-	Duration      float64
-	TickInterval  float64
-	TimeRemaining float64
-}
-
-type RapidShotEffect struct {
-	DamagePerHit  int
-	HitsRemaining int
-	HitInterval   float64
-	TimeUntilNext float64
-}
 
 type Game struct {
 	GameMap               GameMap                       // Игровая карта
@@ -61,8 +40,6 @@ type Game struct {
 	AbilityCooldowns      map[string]float64            // Таймеры для способностей
 	CombatLog             []string                      // Добавляем поле для лога боя
 	combatBackgroundImage *ebiten.Image                 // Новое поле для фона боя
-	ActiveDotEffect       *DotEffect                    // Эффект урона со временем
-	ActiveRapidShot       *RapidShotEffect              // Эффект последовательных ударов
 	EnemyAttackCooldown   float64                       // Кд атак врагов
 	ClassConfig           map[string]ClassConfig        // Мапа для классовых конфигов
 }
@@ -87,49 +64,33 @@ func (g *Game) Update() error {
 		}
 	}
 
-	// Обработка DoT-эффекта
-	if g.ActiveDotEffect != nil && g.CurrentEnemy != nil {
-		g.ActiveDotEffect.TimeRemaining -= dt
-		if g.ActiveDotEffect.TimeRemaining <= 0 {
-			g.ActiveDotEffect = nil
-		} else {
-			g.ActiveDotEffect.TickInterval -= dt
-			if g.ActiveDotEffect.TickInterval <= 0 {
-				g.CurrentEnemy.HP -= g.ActiveDotEffect.DamagePerTick
-				g.CombatLog = append(g.CombatLog, fmt.Sprintf("%s takes %d burn damage. Enemy HP: %d", g.CurrentEnemy.Name, g.ActiveDotEffect.DamagePerTick, g.CurrentEnemy.HP))
-				g.ActiveDotEffect.TickInterval = 1.0 // Сбрасываем интервал
-				if g.CurrentEnemy.HP <= 0 {
-					g.CombatLog = append(g.CombatLog, fmt.Sprintf("%s defeated!", g.CurrentEnemy.Name))
-					g.Player.AddExperience(20, g)
-					g.Enemies = removeEnemy(g.Enemies, g.CurrentEnemy.ID)
-					g.CurrentEnemy = nil
-					g.ActiveDotEffect = nil
-					g.ActiveRapidShot = nil
-					g.State = Dungeon
-				}
+	// Обработка эффектов на текущем враге
+	if g.CurrentEnemy != nil {
+		// Обрабатываем все эффекты
+		for i := 0; i < len(g.CurrentEnemy.ActiveEffects); i++ {
+			effect := g.CurrentEnemy.ActiveEffects[i]
+			logMessage := effect.Update(dt, g.CurrentEnemy, g)
+			if logMessage != "" {
+				g.CombatLog = append(g.CombatLog, logMessage)
 			}
-		}
-	}
 
-	// Обработка Rapid Shot
-	if g.ActiveRapidShot != nil && g.CurrentEnemy != nil {
-		g.ActiveRapidShot.TimeUntilNext -= dt
-		if g.ActiveRapidShot.TimeUntilNext <= 0 && g.ActiveRapidShot.HitsRemaining > 0 {
-			g.CurrentEnemy.HP -= g.ActiveRapidShot.DamagePerHit
-			g.CombatLog = append(g.CombatLog, fmt.Sprintf("Rapid Shot hits %s for %d damage. Enemy HP: %d", g.CurrentEnemy.Name, g.ActiveRapidShot.DamagePerHit, g.CurrentEnemy.HP))
-			g.ActiveRapidShot.HitsRemaining--
-			g.ActiveRapidShot.TimeUntilNext = g.ActiveRapidShot.HitInterval
-			if g.ActiveRapidShot.HitsRemaining <= 0 {
-				g.ActiveRapidShot = nil
-			}
+			// Проверяем, не умер ли враг
 			if g.CurrentEnemy.HP <= 0 {
 				g.CombatLog = append(g.CombatLog, fmt.Sprintf("%s defeated!", g.CurrentEnemy.Name))
-				g.Player.AddExperience(20, g)
+				levelUpMsg := g.Player.AddExperience(20, g)
+				if levelUpMsg != "" {
+					g.CombatLog = append(g.CombatLog, levelUpMsg)
+				}
 				g.Enemies = removeEnemy(g.Enemies, g.CurrentEnemy.ID)
 				g.CurrentEnemy = nil
-				g.ActiveDotEffect = nil
-				g.ActiveRapidShot = nil
 				g.State = Dungeon
+				break // Прерываем цикл, так как враг мёртв
+			}
+
+			// Удаляем завершённые эффекты
+			if effect.IsFinished() {
+				g.CurrentEnemy.ActiveEffects = append(g.CurrentEnemy.ActiveEffects[:i], g.CurrentEnemy.ActiveEffects[i+1:]...)
+				i-- // Уменьшаем индекс, так как слайс сдвинулся
 			}
 		}
 	}
@@ -141,23 +102,20 @@ func (g *Game) Update() error {
 			enemyDamage := int(g.CurrentEnemy.Strength)
 			var defense int
 			defense = int(g.Player.PhDefense) // Предполагаем, что враги наносят физический урон
-			// Новая формула: damage = strength * (100 / (100 + defense))
 			effectiveDamage := int(float64(enemyDamage) * (100.0 / (100.0 + float64(defense))))
 			if effectiveDamage < 3 {
 				effectiveDamage = 3 // Минимальный урон 3
 			}
-			oldHP := g.Player.HP // Сохраняем старое значение HP для отладки
+			oldHP := g.Player.HP
 			g.Player.HP -= uint16(effectiveDamage)
 			g.CombatLog = append(g.CombatLog, fmt.Sprintf("%s counterattacks for %d damage. Player HP: %d", g.CurrentEnemy.Name, effectiveDamage, g.Player.HP))
-			fmt.Printf("Player HP changed from %d to %d\n", oldHP, g.Player.HP) // Отладка
+			fmt.Printf("Player HP changed from %d to %d\n", oldHP, g.Player.HP)
 			g.EnemyAttackCooldown = 2.0
 			if g.Player.HP <= 0 {
 				g.CombatLog = append(g.CombatLog, "Player defeated! Game Over.")
 				g.State = Menu
 				g.Player = NewPlayer(WarriorClass, g)
 				g.CurrentEnemy = nil
-				g.ActiveDotEffect = nil
-				g.ActiveRapidShot = nil
 			}
 		}
 	}
@@ -224,6 +182,9 @@ func (g *Game) Update() error {
 		if inpututil.IsKeyJustPressed(ebiten.Key2) {
 			g.useAbility("2")
 		}
+		if inpututil.IsKeyJustPressed(ebiten.Key3) {
+			g.useAbility("3")
+		}
 
 	case Dungeon:
 		if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
@@ -272,12 +233,11 @@ func (g *Game) Update() error {
 				g.Player.Y = newY
 				g.moveDelay = 10
 			}
-			// Проверка столкновения с врагом
 			for _, enemy := range g.Enemies {
 				if g.isAdjacent(g.Player.X, g.Player.Y, enemy.X, enemy.Y) {
 					g.CurrentEnemy = &enemy
 					g.State = CombatState
-					g.AutoAttackCooldown = 2.0 // Таймер автоатаки в секундах
+					g.AutoAttackCooldown = 2.0
 					return nil
 				}
 			}

@@ -459,6 +459,12 @@ func (g *Game) drawCombat(screen *ebiten.Image) {
 		ebitenutil.DrawRect(screen, 50, 630, 150, 20, color.RGBA{0, 255, 0, 128}) // Зеленый фон
 	}
 
+	if g.AbilityCooldowns["3"] > 0 {
+		ebitenutil.DrawRect(screen, 50, 660, 150, 20, color.RGBA{255, 0, 0, 128}) // Красный фон
+	} else {
+		ebitenutil.DrawRect(screen, 50, 660, 150, 20, color.RGBA{0, 255, 0, 128}) // Зеленый фон
+	}
+
 	ebitenutil.DebugPrintAt(screen, ability1Text, 50, 600)
 	ebitenutil.DebugPrintAt(screen, ability2Text, 50, 630)
 	ebitenutil.DebugPrintAt(screen, "3: Ult", 50, 660) // Пока оставим как есть

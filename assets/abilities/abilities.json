@@ -21,6 +21,7 @@
         "multiplier": 0.2,
         "dot_multiplier": 6.0,
         "dot_duration": 10.0,
+        "dot_name": "Bleed",
         "cooldown": 10
       }
 
@@ -35,6 +36,7 @@
         "multiplier": 1.0,
         "dot_multiplier": 2.1,
         "dot_duration": 4.0,
+        "dot_name": "Ignite",
         "cooldown": 3.0
       },
       {

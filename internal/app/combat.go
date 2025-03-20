@@ -34,14 +34,15 @@ func (g *Game) autoAttack() {
 
 		g.CurrentEnemy.HP -= effectiveDamage
 		g.CombatLog = append(g.CombatLog, fmt.Sprintf("Autoattack hits %s for %d %s damage. Enemy HP: %d", g.CurrentEnemy.Name, effectiveDamage, g.Player.DamageType, g.CurrentEnemy.HP))
-		fmt.Printf("Autoattack hits %s for %d %s damage. Enemy HP: %d\n", g.CurrentEnemy.Name, effectiveDamage, g.Player.DamageType, g.CurrentEnemy.HP) //Отладка
+		fmt.Printf("Autoattack hits %s for %d %s damage. Enemy HP: %d\n", g.CurrentEnemy.Name, effectiveDamage, g.Player.DamageType, g.CurrentEnemy.HP) // Отладка
 		if g.CurrentEnemy.HP <= 0 {
 			g.CombatLog = append(g.CombatLog, fmt.Sprintf("%s defeated!", g.CurrentEnemy.Name))
-			g.Player.AddExperience(20, g) // +10 опыта за врага
+			levelUpMsg := g.Player.AddExperience(20, g) // +20 опыта за врага
+			if levelUpMsg != "" {
+				g.CombatLog = append(g.CombatLog, levelUpMsg)
+			}
 			g.Enemies = removeEnemy(g.Enemies, g.CurrentEnemy.ID)
 			g.CurrentEnemy = nil
-			g.ActiveDotEffect = nil
-			g.ActiveRapidShot = nil
 			g.State = Dungeon
 		}
 	}
@@ -115,11 +116,22 @@ func (g *Game) useAbility(ability string) {
 	g.CurrentEnemy.HP -= effectiveDamage
 	g.AbilityCooldowns[ability] = config.Cooldown
 	g.CombatLog = append(g.CombatLog, fmt.Sprintf("Used %s for %d %s damage. Enemy HP: %d", config.Name, effectiveDamage, g.Player.DamageType, g.CurrentEnemy.HP))
-	fmt.Printf("Used %s for %d %s damage. Enemy HP: %d\n", config.Name, effectiveDamage, g.Player.DamageType, g.CurrentEnemy.HP) //Отладка
+	fmt.Printf("Used %s for %d %s damage. Enemy HP: %d\n", config.Name, effectiveDamage, g.Player.DamageType, g.CurrentEnemy.HP) // Отладка
 
 	// Проверяем дополнительные эффекты
 	if config.DotDuration > 0 {
-		dotDamage := int(float64(g.Player.Intelligence) * config.DotMultiplier)
+		var dotDamage int
+		switch g.Player.MainStat {
+		case StrengthStat:
+			dotDamage = int(float64(g.Player.Strength) * config.DotMultiplier)
+		case AgilityStat:
+			dotDamage = int(float64(g.Player.Agility) * config.DotMultiplier)
+		case IntelligenceStat:
+			dotDamage = int(float64(g.Player.Intelligence) * config.DotMultiplier)
+		default:
+			dotDamage = int(10 * config.DotMultiplier)
+		}
+
 		if !config.IgnoreDefense {
 			var defense int
 			switch g.Player.DamageType {
@@ -135,17 +147,31 @@ func (g *Game) useAbility(ability string) {
 		if dotDamage < 1 {
 			dotDamage = 1
 		}
-		g.ActiveDotEffect = &DotEffect{
+
+		// Определяем имя эффекта в зависимости от класса
+		dotName := config.DotName
+		if dotName == "" {
+			dotName = "Burn" // Значение по умолчанию
+		}
+
+		dotEffect := &DotEffect{
+			Name:          dotName,
 			DamagePerTick: dotDamage,
 			Duration:      config.DotDuration,
 			TickInterval:  1.0,
 			TimeRemaining: config.DotDuration,
+			TickTimer:     1.0,
 		}
-		g.CombatLog = append(g.CombatLog, fmt.Sprintf("%s is burning for %d damage per second!", g.CurrentEnemy.Name, dotDamage))
-		fmt.Printf("%s is burning for %d damage per second!\n", g.CurrentEnemy.Name, dotDamage) //Отладка
+		if g.CurrentEnemy.ApplyEffect(dotEffect) {
+			g.CombatLog = append(g.CombatLog, fmt.Sprintf("%s is affected by %s for %d damage per second!", g.CurrentEnemy.Name, dotName, dotDamage))
+			fmt.Printf("%s is affected by %s for %d damage per second!\n", g.CurrentEnemy.Name, dotName, dotDamage) // Отладка
+		} else {
+			g.CombatLog = append(g.CombatLog, fmt.Sprintf("Cannot apply %s effect to %s: too many effects!", dotName, g.CurrentEnemy.Name))
+		}
 	}
 
 	if config.HitCount > 0 {
+		rapidDamage := effectiveDamage
 		if !config.IgnoreDefense {
 			var defense int
 			switch g.Player.DamageType {
@@ -156,26 +182,33 @@ func (g *Game) useAbility(ability string) {
 			default:
 				defense = 0
 			}
-			effectiveDamage = int(float64(effectiveDamage) * (100.0 / (100.0 + float64(defense))))
+			rapidDamage = int(float64(rapidDamage) * (100.0 / (100.0 + float64(defense))))
 		}
-		if effectiveDamage < 1 {
-			effectiveDamage = 1
+		if rapidDamage < 1 {
+			rapidDamage = 1
 		}
-		g.ActiveRapidShot = &RapidShotEffect{
-			DamagePerHit:  effectiveDamage,
+		rapidShot := &RapidShotEffect{
+			Name:          "Rapid Shot",
+			DamagePerHit:  rapidDamage,
 			HitsRemaining: config.HitCount - 1,
 			HitInterval:   config.HitInterval,
 			TimeUntilNext: config.HitInterval,
+		}
+		if g.CurrentEnemy.ApplyEffect(rapidShot) {
+			g.CombatLog = append(g.CombatLog, fmt.Sprintf("%s triggers Rapid Shot on %s!", config.Name, g.CurrentEnemy.Name))
+		} else {
+			g.CombatLog = append(g.CombatLog, fmt.Sprintf("Cannot apply Rapid Shot to %s: too many effects!", g.CurrentEnemy.Name))
 		}
 	}
 
 	if g.CurrentEnemy.HP <= 0 {
 		g.CombatLog = append(g.CombatLog, fmt.Sprintf("%s defeated!", g.CurrentEnemy.Name))
-		g.Player.AddExperience(20, g) // +10 опыта за врага
+		levelUpMsg := g.Player.AddExperience(20, g) // +20 опыта за врага
+		if levelUpMsg != "" {
+			g.CombatLog = append(g.CombatLog, levelUpMsg)
+		}
 		g.Enemies = removeEnemy(g.Enemies, g.CurrentEnemy.ID)
 		g.CurrentEnemy = nil
-		g.ActiveDotEffect = nil
-		g.ActiveRapidShot = nil
 		g.State = Dungeon
 	}
 }
