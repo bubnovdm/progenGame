@@ -9,6 +9,13 @@ import (
 	"time"
 )
 
+// Надо переработать DOT-ы через интерфейсы, т.к. поведение у них одно
+// Effect описывает поведение эффекта, который применяется к цели
+type Effect interface {
+	Update(dt float64, target *Enemy, g *Game) (logMessage string) // Обновляет эффект и возвращает сообщение для лога
+	IsFinished() bool                                              // Возвращает true, если эффект завершён
+}
+
 type GameState uint8
 
 const (

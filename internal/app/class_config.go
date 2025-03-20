@@ -52,16 +52,6 @@ func LoadClassConfigs(filePath string) error {
 	return nil
 }
 
-// GetClassConfigForType возвращает конфигурацию класса по его типу
-func GetClassConfigForType(classType string) *ClassConfig {
-	for _, config := range classConfigs {
-		if config.Type == classType {
-			return &config
-		}
-	}
-	return nil
-}
-
 // ToMap преобразует слайс ClassConfigs в мапу для удобного доступа по имени класса
 func ToMap() map[string]ClassConfig {
 	configMap := make(map[string]ClassConfig)

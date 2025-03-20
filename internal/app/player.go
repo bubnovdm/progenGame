@@ -4,7 +4,7 @@ import "fmt"
 
 // player.go
 
-type PlayerClass int
+type PlayerClass uint8
 
 const (
 	WarriorClass PlayerClass = 0
@@ -55,25 +55,24 @@ const (
 )
 
 type Player struct {
-	ID           string // 16 байт, выравнивание 8
-	Name         string // 16 байт, выравнивание 8
-	MainStat     MainStat
-	DamageType   DamageType
-	Class        PlayerClass // 16 байт, выравнивание 8
-	Inventory    []Item      // 24 байта, выравнивание 8
-	Skills       []Skill     // 24 байта, выравнивание 8
-	Experience   uint8       // 1 байта, выравнивание 1
-	HP           uint16      // 2 байта, выравнивание 2
-	MaxHP        uint16      // 2 байта, выравнивание 2
-	X            int         // 8 байт, выравнивание 8
-	Y            int         // 8 байт, выравнивание 8
-	Level        uint8       // 1 байт, выравнивание 1
-	Strength     uint8       // 1 байт, выравнивание 1
-	Agility      uint8       // 1 байт, выравнивание 1
-	Intelligence uint8       // 1 байт, выравнивание 1
-	PhDefense    uint8       // 1 байт, выравнивание 1
-	MgDefense    uint8       // 1 байт, выравнивание 1
-
+	ID           string      // 16 байт
+	Name         string      // 16 байт
+	Inventory    []Item      // 24 байта
+	Skills       []Skill     // 24 байта
+	X            int         // 8 байт
+	Y            int         // 8 байт
+	Class        PlayerClass // 16 байт
+	MainStat     MainStat    // 8 байт
+	DamageType   DamageType  // 8 байт
+	HP           uint16      // 2 байта
+	MaxHP        uint16      // 2 байта
+	Experience   uint8       // 1 байт
+	Level        uint8       // 1 байт
+	Strength     uint8       // 1 байт
+	Agility      uint8       // 1 байт
+	Intelligence uint8       // 1 байт
+	PhDefense    uint8       // 1 байт
+	MgDefense    uint8       // 1 байт
 }
 
 func NewPlayer(class PlayerClass, g *Game) Player {

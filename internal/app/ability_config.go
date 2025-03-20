@@ -3,7 +3,7 @@ package app
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 )
 
 // AbilityConfig описывает параметры способности
@@ -30,14 +30,14 @@ var abilityConfigs []ClassAbilityConfig
 
 // LoadAbilityConfigs загружает конфигурации способностей из JSON-файла
 func LoadAbilityConfigs(filePath string) error {
-	data, err := ioutil.ReadFile(filePath)
+	data, err := os.ReadFile(filePath)
 	if err != nil {
-		return fmt.Errorf("failed to read ability config file: %v", err)
+		return fmt.Errorf("Failed to read ability config file: %v", err)
 	}
 
 	err = json.Unmarshal(data, &abilityConfigs)
 	if err != nil {
-		return fmt.Errorf("failed to unmarshal ability config: %v", err)
+		return fmt.Errorf("Failed to unmarshal ability config: %v", err)
 	}
 
 	return nil

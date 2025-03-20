@@ -34,6 +34,7 @@ func (g *Game) autoAttack() {
 
 		g.CurrentEnemy.HP -= effectiveDamage
 		g.CombatLog = append(g.CombatLog, fmt.Sprintf("Autoattack hits %s for %d %s damage. Enemy HP: %d", g.CurrentEnemy.Name, effectiveDamage, g.Player.DamageType, g.CurrentEnemy.HP))
+		fmt.Printf("Autoattack hits %s for %d %s damage. Enemy HP: %d\n", g.CurrentEnemy.Name, effectiveDamage, g.Player.DamageType, g.CurrentEnemy.HP) //Отладка
 		if g.CurrentEnemy.HP <= 0 {
 			g.CombatLog = append(g.CombatLog, fmt.Sprintf("%s defeated!", g.CurrentEnemy.Name))
 			g.Player.AddExperience(20, g) // +10 опыта за врага
@@ -88,7 +89,7 @@ func (g *Game) useAbility(ability string) {
 	case IntelligenceStat:
 		damage = int(float64(g.Player.Intelligence) * config.Multiplier)
 	default:
-		damage = int(5 * config.Multiplier)
+		damage = int(10 * config.Multiplier)
 	}
 
 	// Применяем защиту (если не игнорируется)
@@ -97,24 +98,24 @@ func (g *Game) useAbility(ability string) {
 		var defense int
 		switch g.Player.DamageType {
 		case PhysicalDamage:
-			defense = int(g.CurrentEnemy.PhDefense)
+			defense = g.CurrentEnemy.PhDefense
 		case MagicalDamage:
-			defense = int(g.CurrentEnemy.MgDefense)
+			defense = g.CurrentEnemy.MgDefense
 		default:
 			defense = 0
 		}
-		// Новая формула: damage = (mainStat * multiplier) * (100 / (100 + defense))
 		effectiveDamage = int(float64(damage) * (100.0 / (100.0 + float64(defense))))
 	}
 
-	if effectiveDamage < 1 {
-		effectiveDamage = 1 // Минимальный урон 1
+	if effectiveDamage < 3 {
+		effectiveDamage = 3 // Минимальный урон 3
 	}
 
 	// Применяем мгновенный урон
 	g.CurrentEnemy.HP -= effectiveDamage
 	g.AbilityCooldowns[ability] = config.Cooldown
 	g.CombatLog = append(g.CombatLog, fmt.Sprintf("Used %s for %d %s damage. Enemy HP: %d", config.Name, effectiveDamage, g.Player.DamageType, g.CurrentEnemy.HP))
+	fmt.Printf("Used %s for %d %s damage. Enemy HP: %d\n", config.Name, effectiveDamage, g.Player.DamageType, g.CurrentEnemy.HP) //Отладка
 
 	// Проверяем дополнительные эффекты
 	if config.DotDuration > 0 {
@@ -141,6 +142,7 @@ func (g *Game) useAbility(ability string) {
 			TimeRemaining: config.DotDuration,
 		}
 		g.CombatLog = append(g.CombatLog, fmt.Sprintf("%s is burning for %d damage per second!", g.CurrentEnemy.Name, dotDamage))
+		fmt.Printf("%s is burning for %d damage per second!\n", g.CurrentEnemy.Name, dotDamage) //Отладка
 	}
 
 	if config.HitCount > 0 {
