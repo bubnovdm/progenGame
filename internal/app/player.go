@@ -97,6 +97,8 @@ func NewPlayer(class PlayerClass, g *Game) Player {
 				PhDefense:    7,
 				MgDefense:    3,
 			},
+			MainStat:   StrengthStat,
+			DamageType: PhysicalDamage,
 		}
 	}
 
@@ -112,6 +114,8 @@ func NewPlayer(class PlayerClass, g *Game) Player {
 		Intelligence: uint8(baseStats.Intelligence),
 		PhDefense:    uint8(baseStats.PhDefense),
 		MgDefense:    uint8(baseStats.MgDefense),
+		MainStat:     classConfig.MainStat,
+		DamageType:   classConfig.DamageType,
 		X:            1,
 		Y:            1,
 		Inventory:    []Item{},

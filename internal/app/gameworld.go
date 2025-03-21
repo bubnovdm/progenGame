@@ -143,3 +143,10 @@ func NewEnemy(x, y int, level int) Enemy {
 		MgDefense:    config.BaseStats.MgDefense,
 	}
 }
+
+// Тригеррит бой с врагом
+func (g *Game) isAdjacent(x1, y1, x2, y2 int) bool {
+	dx := x1 - x2
+	dy := y1 - y2
+	return utils.Abs(dx) <= 1 && utils.Abs(dy) <= 1
+}

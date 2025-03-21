@@ -308,9 +308,3 @@ func Start() {
 		panic(err)
 	}
 }
-
-// Базовые методы
-func (g *Game) isAdjacent(x1, y1, x2, y2 int) bool {
-	return (x1 == x2 && (y1 == y2-1 || y1 == y2+1)) || // Вертикально
-		(y1 == y2 && (x1 == x2-1 || x1 == x2+1)) // Горизонтально
-}

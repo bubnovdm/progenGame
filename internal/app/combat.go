@@ -84,13 +84,17 @@ func (g *Game) useAbility(ability string) {
 	var damage int
 	switch g.Player.MainStat {
 	case StrengthStat:
+		fmt.Printf("Player Strength: %d, Multiplier: %.2f\n", g.Player.Strength, config.Multiplier) // Отладка
 		damage = int(float64(g.Player.Strength) * config.Multiplier)
 	case AgilityStat:
+		fmt.Printf("Player Agility: %d, Multiplier: %.2f\n", g.Player.Agility, config.Multiplier) // Отладка
 		damage = int(float64(g.Player.Agility) * config.Multiplier)
 	case IntelligenceStat:
+		fmt.Printf("Player Intelligence: %d, Multiplier: %.2f\n", g.Player.Intelligence, config.Multiplier) // Отладка
 		damage = int(float64(g.Player.Intelligence) * config.Multiplier)
 	default:
 		damage = int(10 * config.Multiplier)
+		fmt.Printf("Default damage: 10, Multiplier: %.2f\n", config.Multiplier) // Отладка
 	}
 
 	// Применяем защиту (если не игнорируется)

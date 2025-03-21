@@ -44,6 +44,15 @@
         "name": "Heal",
         "heal_percentage": 0.5,
         "cooldown": 15.0
+      },
+      {
+        "key" : "3",
+        "name": "Arcane Pulsar",
+        "multiplier": 0.0,
+        "dot_multiplier": 5.0,
+        "dot_duration": 5.0,
+        "dot_name": "Pulsar",
+        "cooldown": 5.0
       }
     ]
   },

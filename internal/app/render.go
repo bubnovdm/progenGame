@@ -316,6 +316,15 @@ func (g *Game) drawInGameMenu(screen *ebiten.Image) {
 	// Заголовок
 	ebitenutil.DebugPrintAt(screen, "Pause Menu", 450, 300)
 
+	// Характеристики (слева)
+	ebitenutil.DebugPrintAt(screen, "Stats", 60, 110)
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Class: %s", g.Player.Class), 60, 140)
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Str: %d", g.Player.Strength), 60, 170)
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Agi: %d", g.Player.Agility), 60, 200)
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Int: %d", g.Player.Intelligence), 60, 230)
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("pDef: %d", g.Player.PhDefense), 60, 260)
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("mDef: %d", g.Player.MgDefense), 60, 290)
+
 	// Отрисовка кнопок
 	for _, button := range g.getInGameMenuButtons() {
 		buttonColor := color.RGBA{R: 100, G: 100, B: 100, A: 255}
@@ -405,7 +414,7 @@ func (g *Game) drawCombat(screen *ebiten.Image) {
 	geomExp.Translate(250, 380) // Под полоской HP
 	screen.DrawImage(expBackground, &ebiten.DrawImageOptions{GeoM: geomExp})
 	expFill := ebiten.NewImage(expBarWidth, barHeight)
-	expFill.Fill(color.RGBA{R: 0, G: 255, B: 215, A: 255}) // Желтый цвет для опыта
+	expFill.Fill(color.RGBA{R: 0, G: 255, B: 215, A: 255}) // Голубой цвет для опыта
 	geomExp = ebiten.GeoM{}
 	geomExp.Translate(250, 380)
 	screen.DrawImage(expFill, &ebiten.DrawImageOptions{GeoM: geomExp})
@@ -462,7 +471,7 @@ func (g *Game) drawCombat(screen *ebiten.Image) {
 				switch dotEffect.Name {
 				case "Poison":
 					dotColor = color.RGBA{R: 0, G: 128, B: 0, A: 255} // Зеленый для яда
-				case "Burn":
+				case "Ignite":
 					dotColor = color.RGBA{R: 255, G: 69, B: 0, A: 255} // Оранжевый для горения
 				case "Bleed":
 					dotColor = color.RGBA{R: 200, G: 0, B: 0, A: 255} // Красный для кровотечения

@@ -15,7 +15,7 @@ type AbilityConfig struct {
 	Cooldown       float64 `json:"cooldown"`
 	DotDuration    float64 `json:"dot_duration"`
 	DotMultiplier  float64 `json:"dot_multiplier"`
-	DotName        string  `json:"dot_name"` // Новое поле
+	DotName        string  `json:"dot_name"`
 	HitCount       int     `json:"hit_count"`
 	HitInterval    float64 `json:"hit_interval"`
 	IgnoreDefense  bool    `json:"ignore_defense"`
