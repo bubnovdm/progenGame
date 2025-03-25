@@ -21,6 +21,7 @@
         "multiplier": 0.2,
         "dot_multiplier": 6.0,
         "dot_duration": 10.0,
+        "dot_name": "Bleed",
         "cooldown": 10
       }
 
@@ -33,8 +34,9 @@
         "key": "1",
         "name": "Fireball",
         "multiplier": 1.0,
-        "dot_multiplier": 1.8,
-        "dot_duration": 5.0,
+        "dot_multiplier": 2.1,
+        "dot_duration": 4.0,
+        "dot_name": "Ignite",
         "cooldown": 3.0
       },
       {
@@ -42,6 +44,15 @@
         "name": "Heal",
         "heal_percentage": 0.5,
         "cooldown": 15.0
+      },
+      {
+        "key" : "3",
+        "name": "Arcane Pulsar",
+        "multiplier": 0.0,
+        "dot_multiplier": 5.0,
+        "dot_duration": 5.0,
+        "dot_name": "Pulsar",
+        "cooldown": 5.0
       }
     ]
   },

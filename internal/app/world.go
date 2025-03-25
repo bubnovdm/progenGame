@@ -23,7 +23,7 @@ const (
 	DungeonMap
 )
 
-type Layer [MapSize][MapSize]rune
+type Layer [MapSize][MapSize]uint8
 
 type GameMap struct {
 	Background Layer

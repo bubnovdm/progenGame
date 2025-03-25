@@ -1,0 +1,25 @@
+{
+  "player": {
+    "ID": "",
+    "Name": "",
+    "X": 33,
+    "Y": 5,
+    "Inventory": [],
+    "Skills": [],
+    "Class": 1,
+    "MainStat": "intelligence",
+    "DamageType": "magical",
+    "HP": 115,
+    "MaxHP": 120,
+    "Experience": 80,
+    "Level": 6,
+    "Strength": 10,
+    "Agility": 10,
+    "Intelligence": 25,
+    "PhDefense": 8,
+    "MgDefense": 22
+  },
+  "max_floor": 2,
+  "current_floor": 2,
+  "selected_class": 1
+}

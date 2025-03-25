@@ -57,13 +57,13 @@ const (
 type Player struct {
 	ID           string      // 16 байт
 	Name         string      // 16 байт
-	Inventory    []Item      // 24 байта
-	Skills       []Skill     // 24 байта
 	X            int         // 8 байт
 	Y            int         // 8 байт
+	Inventory    []Item      // 24 байта
+	Skills       []Skill     // 24 байта
 	Class        PlayerClass // 16 байт
-	MainStat     MainStat    // 8 байт
-	DamageType   DamageType  // 8 байт
+	MainStat     MainStat    // 16 байт
+	DamageType   DamageType  // 16 байт
 	HP           uint16      // 2 байта
 	MaxHP        uint16      // 2 байта
 	Experience   uint8       // 1 байт
@@ -130,7 +130,7 @@ func (p *Player) AddExperience(exp uint8, g *Game) string {
 	if p.Experience >= 100 {
 		p.Experience -= 100
 		p.LevelUp(g)
-		return fmt.Sprintf("Level Up! You are now level %d", p.Level)
+		return fmt.Sprintf("CurrentFloor Up! You are now level %d", p.Level)
 	}
 	return ""
 }

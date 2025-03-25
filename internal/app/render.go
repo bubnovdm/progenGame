@@ -79,11 +79,49 @@ func (g *Game) drawCharacterSheet(screen *ebiten.Image) {
 		}
 	}
 
-	// Изображение персонажа в центре (используем characterImages)
+	// Выпадающий список для выбора этажа (под инвентарем)
+	const (
+		floorButtonWidth  = 200
+		floorButtonHeight = 30
+		floorButtonX      = 700
+		floorButtonY      = 360 // Под инвентарем (100 + 250 + 10 отступ)
+	)
+
+	// Кнопка для открытия/закрытия выпадающего списка
+	floorButton := ebiten.NewImage(floorButtonWidth, floorButtonHeight)
+	floorButtonColor := color.RGBA{R: 100, G: 100, B: 100, A: 255}
+	mx, my := ebiten.CursorPosition()
+	if mx >= floorButtonX && mx <= floorButtonX+floorButtonWidth &&
+		my >= floorButtonY && my <= floorButtonY+floorButtonHeight {
+		floorButtonColor = color.RGBA{R: 150, G: 150, B: 150, A: 255}
+	}
+	floorButton.Fill(floorButtonColor)
+	geom = ebiten.GeoM{}
+	geom.Translate(float64(floorButtonX), float64(floorButtonY))
+	screen.DrawImage(floorButton, &ebiten.DrawImageOptions{GeoM: geom})
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Floor: %d", g.SelectedFloor), floorButtonX+10, floorButtonY+5)
+
+	// Отрисовка выпадающего списка, если он открыт
+	if g.FloorSelectorOpen {
+		for i := 1; i <= g.MaxFloor; i++ {
+			option := ebiten.NewImage(floorButtonWidth, floorButtonHeight)
+			optionColor := color.RGBA{R: 80, G: 80, B: 80, A: 255}
+			if mx >= floorButtonX && mx <= floorButtonX+floorButtonWidth &&
+				my >= floorButtonY+floorButtonHeight*i && my <= floorButtonY+floorButtonHeight*(i+1) {
+				optionColor = color.RGBA{R: 120, G: 120, B: 120, A: 255}
+			}
+			option.Fill(optionColor)
+			geom = ebiten.GeoM{}
+			geom.Translate(float64(floorButtonX), float64(floorButtonY+floorButtonHeight*i))
+			screen.DrawImage(option, &ebiten.DrawImageOptions{GeoM: geom})
+			ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Floor %d", i), floorButtonX+10, floorButtonY+floorButtonHeight*i+5)
+		}
+	}
+
+	// Изображение персонажа в центре
 	if img, ok := g.characterImages[g.Player.Class]; ok {
 		geom = ebiten.GeoM{}
-		geom.Translate(400, 300) // Центр изображения (500 - 100, 400 - 100)
-		//geom.Scale(0.75, 0.75)   // Масштабирование до 150x150 (если исходное 200x200)
+		geom.Translate(400, 300)
 		op := &ebiten.DrawImageOptions{GeoM: geom}
 		screen.DrawImage(img, op)
 	}
@@ -91,7 +129,6 @@ func (g *Game) drawCharacterSheet(screen *ebiten.Image) {
 	// Кнопки переключения класса и "Play"
 	for _, button := range g.getCharacterSheetButtons() {
 		buttonColor := color.RGBA{R: 100, G: 100, B: 100, A: 255}
-		mx, my := ebiten.CursorPosition()
 		if mx >= button.X && mx <= button.X+button.Width &&
 			my >= button.Y && my <= button.Y+button.Height {
 			buttonColor = color.RGBA{R: 150, G: 150, B: 150, A: 255}
@@ -128,7 +165,7 @@ func (g *Game) drawDungeon(screen *ebiten.Image) {
 
 			if distance <= float64(visibleRadius) {
 				cell := g.GameMap.Background[cellY][cellX]
-				if img, ok := g.textures[cell]; ok {
+				if img, ok := g.textures[rune(cell)]; ok {
 					op := &ebiten.DrawImageOptions{}
 					alpha := 1.0 - (distance / float64(visibleRadius))
 					if alpha < 0.3 {
@@ -158,7 +195,7 @@ func (g *Game) drawDungeon(screen *ebiten.Image) {
 				if cell == EmptySymbol {
 					continue
 				}
-				if img, ok := g.textures[cell]; ok {
+				if img, ok := g.textures[rune(cell)]; ok {
 					op := &ebiten.DrawImageOptions{}
 					op.ColorScale.SetA(1.0)
 					geom := ebiten.GeoM{}
@@ -184,7 +221,7 @@ func (g *Game) drawDungeon(screen *ebiten.Image) {
 				if cell == EmptySymbol {
 					continue
 				}
-				if img, ok := g.textures[cell]; ok {
+				if img, ok := g.textures[rune(cell)]; ok {
 					op := &ebiten.DrawImageOptions{}
 					op.ColorScale.SetA(1.0)
 					geom := ebiten.GeoM{}
@@ -270,10 +307,10 @@ func (g *Game) drawDungeon(screen *ebiten.Image) {
 
 	// Текст для HP и опыта
 	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("HP: %d/%d", g.Player.HP, g.Player.MaxHP), barX+5, hpY+3) // Используем g.Player.MaxHP
-	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Level: %d (Exp: %d/%d)", g.Player.Level, g.Player.Experience, expPerLevel), barX+5, expY+3)
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("CurrentFloor: %d (Exp: %d/%d)", g.Player.Level, g.Player.Experience, expPerLevel), barX+5, expY+3)
 
 	// Отображение уровня по центру (имеется в виду этаж, а не уровень персонажа)
-	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Floor: %d", g.Level), 500, 15)
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Floor: %d", g.CurrentFloor), 500, 15)
 }
 
 func (g *Game) drawMenu(screen *ebiten.Image) {
@@ -288,12 +325,19 @@ func (g *Game) drawMenu(screen *ebiten.Image) {
 
 	// Отрисовка кнопок
 	for _, button := range g.getMenuButtons() {
-		buttonColor := color.RGBA{R: 100, G: 100, B: 100, A: 255}
+		buttonColor := color.RGBA{R: 100, G: 100, B: 100, A: 255} // Серый цвет по умолчанию
 		mx, my := ebiten.CursorPosition()
-		if mx >= button.X && mx <= button.X+button.Width &&
-			my >= button.Y && my <= button.Y+button.Height {
-			buttonColor = color.RGBA{R: 150, G: 150, B: 150, A: 255}
+
+		// Если кнопка не отключена, проверяем наведение курсора
+		if !button.Disabled {
+			if mx >= button.X && mx <= button.X+button.Width &&
+				my >= button.Y && my <= button.Y+button.Height {
+				buttonColor = color.RGBA{R: 150, G: 150, B: 150, A: 255} // Светлее при наведении
+			}
+		} else {
+			buttonColor = color.RGBA{R: 50, G: 50, B: 50, A: 255} // Темнее, если кнопка отключена
 		}
+
 		buttonImage := ebiten.NewImage(button.Width, button.Height)
 		buttonImage.Fill(buttonColor)
 		geom := ebiten.GeoM{}
@@ -419,7 +463,7 @@ func (g *Game) drawCombat(screen *ebiten.Image) {
 	geomExp.Translate(250, 380)
 	screen.DrawImage(expFill, &ebiten.DrawImageOptions{GeoM: geomExp})
 	// Текст уровня и опыта
-	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Level: %d (Exp: %d/%d)", g.Player.Level, g.Player.Experience, expPerLevel), 250, 383)
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("CurrentFloor: %d (Exp: %d/%d)", g.Player.Level, g.Player.Experience, expPerLevel), 250, 383)
 
 	// Полоска HP врага
 	if g.CurrentEnemy != nil {

@@ -5,8 +5,8 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"log"
-	"math/rand"
-	"time"
+	"os"
+	"unsafe"
 )
 
 type GameState uint8
@@ -20,28 +20,32 @@ const (
 )
 
 type Game struct {
+	selectedClassIndex    int                           // Индекс текущего выбранного класса
+	CurrentFloor          int                           // Уровень карты
+	MaxFloor              int                           // Максимальный этаж, до которого дошёл игрок
+	SelectedFloor         int                           // Выбранный этаж в выпадающем списке
+	moveDelay             int                           // Ограничение кадров на шаг
+	EnemyAttackCooldown   float64                       // Кд атак врагов
+	AutoAttackCooldown    float64                       // Таймер для автоатаки
 	GameMap               GameMap                       // Игровая карта
 	Player                Player                        // Игрок
 	Enemies               []Enemy                       // Слайс врагов
-	moveDelay             int                           // Ограничение кадров на шаг
 	textures              map[rune]*ebiten.Image        // Мапа для текстур
 	playerImage           *ebiten.Image                 // Изображение игрока
 	enemyImage            *ebiten.Image                 // Изображение врага на карте
 	enemyLargeImages      map[string]*ebiten.Image      // Мапа изображений врагов в бою
-	Level                 int                           // Уровень карты
 	State                 GameState                     // Статус экрана
-	selectedClassIndex    int                           // Индекс текущего выбранного класса
 	classes               []PlayerClass                 // Список доступных классов
 	classImages           map[PlayerClass]*ebiten.Image // Мини-иконки для карты
 	characterImages       map[PlayerClass]*ebiten.Image // Большие изображения для CharacterSheet
 	backgroundImage       *ebiten.Image                 // Фоновое изображение
 	CurrentEnemy          *Enemy                        // Враг, с которым идёт бой
-	AutoAttackCooldown    float64                       // Таймер для автоатаки
 	AbilityCooldowns      map[string]float64            // Таймеры для способностей
 	CombatLog             []string                      // Добавляем поле для лога боя
 	combatBackgroundImage *ebiten.Image                 // Новое поле для фона боя
-	EnemyAttackCooldown   float64                       // Кд атак врагов
 	ClassConfig           map[string]ClassConfig        // Мапа для классовых конфигов
+	HasSave               bool                          // Есть ли сохранение
+	FloorSelectorOpen     bool                          // Открыт ли выпадающий список
 }
 
 func (g *Game) Update() error {
@@ -130,9 +134,13 @@ func (g *Game) Update() error {
 		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 			mx, my := ebiten.CursorPosition()
 			for _, button := range g.getMenuButtons() {
+				if button.Disabled {
+					continue // Пропускаем отключенные кнопки
+				}
 				if mx >= button.X && mx <= button.X+button.Width &&
 					my >= button.Y && my <= button.Y+button.Height {
 					button.Action(g)
+					break
 				}
 			}
 		}
@@ -140,10 +148,40 @@ func (g *Game) Update() error {
 	case CharacterSheet:
 		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 			mx, my := ebiten.CursorPosition()
+
+			// Обработка кнопок
 			for _, button := range g.getCharacterSheetButtons() {
 				if mx >= button.X && mx <= button.X+button.Width &&
 					my >= button.Y && my <= button.Y+button.Height {
 					button.Action(g)
+					break
+				}
+			}
+
+			// Обработка выпадающего списка
+			const (
+				floorButtonWidth  = 200
+				floorButtonHeight = 30
+				floorButtonX      = 700
+				floorButtonY      = 360
+			)
+
+			// Нажатие на кнопку "Floor"
+			if mx >= floorButtonX && mx <= floorButtonX+floorButtonWidth &&
+				my >= floorButtonY && my <= floorButtonY+floorButtonHeight {
+				g.FloorSelectorOpen = !g.FloorSelectorOpen
+			}
+
+			// Выбор этажа из выпадающего списка
+			if g.FloorSelectorOpen {
+				for i := 1; i <= g.MaxFloor; i++ {
+					optionY := floorButtonY + floorButtonHeight*i
+					if mx >= floorButtonX && mx <= floorButtonX+floorButtonWidth &&
+						my >= optionY && my <= optionY+floorButtonHeight {
+						g.SelectedFloor = i
+						g.FloorSelectorOpen = false
+						break
+					}
 				}
 			}
 		}
@@ -203,9 +241,12 @@ func (g *Game) Update() error {
 		}
 
 		if g.GameMap.Floor[g.Player.Y][g.Player.X] == ExitSymbol {
-			g.Level++
+			g.CurrentFloor++
+			if g.CurrentFloor > g.MaxFloor {
+				g.MaxFloor = g.CurrentFloor // Обновляем максимальный этаж
+			}
 			var mapType MapType
-			if g.Level%2 == 0 {
+			if g.CurrentFloor%2 == 0 {
 				mapType = OpenMap
 			} else {
 				mapType = DungeonMap
@@ -214,6 +255,12 @@ func (g *Game) Update() error {
 			g.moveToStartPosition()
 			g.spawnEnemies()
 			g.moveDelay = 10
+
+			// Сохраняем игру
+			if err := g.SaveGame(); err != nil {
+				log.Printf("Failed to save game: %v", err)
+			}
+
 			return nil
 		}
 
@@ -272,8 +319,6 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 }
 
 func Start() {
-	rand.Seed(time.Now().UnixNano())
-
 	// Загружаем конфигурации
 	if err := LoadEnemyConfigs("assets/enemies/enemies.json"); err != nil {
 		log.Fatalf("Failed to load enemy configs: %v", err)
@@ -287,7 +332,7 @@ func Start() {
 
 	game := &Game{
 		textures:         make(map[rune]*ebiten.Image),
-		Level:            1,
+		CurrentFloor:     1,
 		State:            Menu,
 		classes:          []PlayerClass{WarriorClass, MageClass, ArcherClass},
 		classImages:      make(map[PlayerClass]*ebiten.Image),
@@ -297,6 +342,21 @@ func Start() {
 		enemyLargeImages: make(map[string]*ebiten.Image),
 		ClassConfig:      ToMap(),
 	}
+
+	// Выводим размер структуры Game
+	fmt.Printf("Size of Game struct: %d bytes\n", unsafe.Sizeof(*game))
+	fmt.Printf(" |-Size of GameMap struct: %d bytes\n", unsafe.Sizeof(game.GameMap))
+	fmt.Printf(" |-Size of Enemies struct: %d bytes\n", unsafe.Sizeof(game.Enemies))
+	fmt.Printf(" |-Size of Player struct: %d bytes\n", unsafe.Sizeof(game.Player))
+	fmt.Printf("   |-Size of Player struct (Skills): %d bytes\n", unsafe.Sizeof(game.Player.Skills))
+	fmt.Printf("   |-Size of Player struct (Inventory): %d bytes\n", unsafe.Sizeof(game.Player.Inventory))
+	fmt.Printf("   |-Size of Player struct (DamageType): %d bytes\n", unsafe.Sizeof(game.Player.DamageType))
+	fmt.Printf(" |-Size of class images: %d bytes\n", unsafe.Sizeof(game.classImages))
+	fmt.Printf(" |-Size of Class config: %d bytes\n", unsafe.Sizeof(game.ClassConfig))
+
+	// Проверяем наличие сохранений
+	_, err := os.Stat("save.json")
+	game.HasSave = err == nil // Добавим поле HasSave в Game
 
 	// Устанавливаем игрока после создания game
 	game.Player = NewPlayer(WarriorClass, game)

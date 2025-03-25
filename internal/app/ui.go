@@ -2,6 +2,7 @@ package app
 
 import (
 	//"github.com/hajimehoshi/ebiten/v2"
+	"log"
 	"os"
 )
 
@@ -9,6 +10,7 @@ type Button struct {
 	X, Y, Width, Height int
 	Label               string
 	Action              func(*Game)
+	Disabled            bool
 }
 
 func (g *Game) getMenuButtons() []Button {
@@ -20,10 +22,10 @@ func (g *Game) getMenuButtons() []Button {
 			Height: 50,
 			Label:  "New Game",
 			Action: func(g *Game) {
-				g.Level = 1
-				g.selectedClassIndex = 0                                 // По умолчанию первый класс (Воин)
-				g.Player = NewPlayer(g.classes[g.selectedClassIndex], g) // Сбрасываем характеристики
-				g.Player.X = 0                                           // Устанавливаем начальные координаты
+				g.CurrentFloor = 1
+				g.selectedClassIndex = 0
+				g.Player = NewPlayer(g.classes[g.selectedClassIndex], g)
+				g.Player.X = 0
 				g.Player.Y = 0
 				g.State = CharacterSheet
 			},
@@ -34,7 +36,16 @@ func (g *Game) getMenuButtons() []Button {
 			Width:  200,
 			Height: 50,
 			Label:  "Continue",
-			Action: func(g *Game) {},
+			Action: func(g *Game) {
+				if g.HasSave {
+					if err := g.LoadGame(); err != nil {
+						log.Printf("Failed to load game: %v", err)
+					} else {
+						g.State = CharacterSheet
+					}
+				}
+			},
+			Disabled: !g.HasSave,
 		},
 		{
 			X:      400,
@@ -114,14 +125,15 @@ func (g *Game) getCharacterSheetButtons() []Button {
 			Height: 60,
 			Label:  "Play",
 			Action: func(g *Game) {
+				g.CurrentFloor = g.SelectedFloor // Устанавливаем текущий этаж
 				var mapType MapType
-				if g.Level%2 == 0 {
+				if g.CurrentFloor%2 == 0 {
 					mapType = OpenMap
 				} else {
 					mapType = DungeonMap
 				}
 				g.GameMap = GenerateMap(mapType)
-				g.moveToStartPosition() // Устанавливает X, Y для Dungeon
+				g.moveToStartPosition()
 				g.spawnEnemies()
 				g.State = Dungeon
 			},

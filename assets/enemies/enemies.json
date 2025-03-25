@@ -9,8 +9,8 @@
       "strength": 5,
       "agility": 3,
       "intelligence": 2,
-      "ph_defense": 2,
-      "mg_defense": 2
+      "ph_defense": 20,
+      "mg_defense": 20
     }
   },
   {
@@ -23,8 +23,8 @@
       "strength": 6,
       "agility": 5,
       "intelligence": 1,
-      "ph_defense": 1,
-      "mg_defense": 1
+      "ph_defense": 10,
+      "mg_defense": 10
     }
   },
   {
@@ -37,8 +37,8 @@
       "strength": 8,
       "agility": 2,
       "intelligence": 1,
-      "ph_defense": 5,
-      "mg_defense": 3
+      "ph_defense": 50,
+      "mg_defense": 30
     }
   }
 ]

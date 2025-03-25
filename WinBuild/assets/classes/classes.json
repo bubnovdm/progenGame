@@ -13,7 +13,7 @@
     "damage_type": "physical",
     "level_up_stats": {
       "max_hp": 12,
-      "strength": 2,
+      "strength": 3,
       "agility": 1,
       "intelligence": 1,
       "ph_defense": 3,
@@ -36,7 +36,7 @@
       "max_hp": 8,
       "strength": 1,
       "agility": 1,
-      "intelligence": 2,
+      "intelligence": 3,
       "ph_defense": 1,
       "mg_defense": 3
     }
@@ -56,7 +56,7 @@
     "level_up_stats": {
       "max_hp": 10,
       "strength": 1,
-      "agility": 2,
+      "agility": 3,
       "intelligence": 1,
       "ph_defense": 2,
       "mg_defense": 2

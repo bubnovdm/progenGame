@@ -47,17 +47,20 @@ func (g *Game) spawnEnemies() {
 	// 1 враг на каждые 25 клеток пола, минимум 1 враг
 	enemyCount := utils.Max(1, floorTiles/25)
 
-	startX, startY := -1, -1
-	exitX, exitY := -1, -1
+	startX, startY := 0, 0
+	exitX, exitY := 0, 0
+	startFound, exitFound := false, false
 
 	// Находим стартовую и конечную позиции
 	for y := 0; y < MapSize; y++ {
 		for x := 0; x < MapSize; x++ {
 			if g.GameMap.Floor[y][x] == StartSymbol {
 				startX, startY = x, y
+				startFound = true
 			}
 			if g.GameMap.Floor[y][x] == ExitSymbol {
 				exitX, exitY = x, y
+				exitFound = true
 			}
 		}
 	}
@@ -70,10 +73,10 @@ func (g *Game) spawnEnemies() {
 
 			// Проверяем, что клетка — пол, не старт, не выход и не занята другим врагом
 			if g.GameMap.Floor[y][x] == PathSymbol &&
-				!(x == startX && y == startY) &&
-				!(x == exitX && y == exitY) &&
+				!(startFound && x == startX && y == startY) &&
+				!(exitFound && x == exitX && y == exitY) &&
 				!g.isEnemyAt(x, y) {
-				enemy := NewEnemy(x, y, g.Level)
+				enemy := NewEnemy(x, y, g.CurrentFloor)
 				g.Enemies = append(g.Enemies, enemy)
 				break
 			}
