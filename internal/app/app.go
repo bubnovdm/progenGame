@@ -20,32 +20,42 @@ const (
 )
 
 type Game struct {
-	selectedClassIndex    int                           // Индекс текущего выбранного класса
-	CurrentFloor          int                           // Уровень карты
-	MaxFloor              int                           // Максимальный этаж, до которого дошёл игрок
-	SelectedFloor         int                           // Выбранный этаж в выпадающем списке
-	moveDelay             int                           // Ограничение кадров на шаг
-	EnemyAttackCooldown   float64                       // Кд атак врагов
-	AutoAttackCooldown    float64                       // Таймер для автоатаки
-	GameMap               GameMap                       // Игровая карта
-	Player                Player                        // Игрок
-	Enemies               []Enemy                       // Слайс врагов
-	textures              map[rune]*ebiten.Image        // Мапа для текстур
-	playerImage           *ebiten.Image                 // Изображение игрока
-	enemyImage            *ebiten.Image                 // Изображение врага на карте
-	enemyLargeImages      map[string]*ebiten.Image      // Мапа изображений врагов в бою
-	State                 GameState                     // Статус экрана
-	classes               []PlayerClass                 // Список доступных классов
+	// Состояние игры
+	State               GameState // Текущее состояние игры (Menu, Dungeon и т.д.)
+	HasSave             bool      // Есть ли сохранение
+	FloorSelectorOpen   bool      // Открыт ли выпадающий список этажей
+	moveDelay           uint8     // Задержка движения (кадры)
+	CurrentFloor        int       // Текущий этаж
+	MaxFloor            int       // Максимальный достигнутый этаж
+	SelectedFloor       int       // Выбранный этаж в выпадающем списке
+	AutoAttackCooldown  float64   // Кулдаун автоатаки
+	EnemyAttackCooldown float64   // Кулдаун атаки врагов
+
+	// Данные игрока
+	Player             Player                 // Игрок
+	selectedClassIndex int                    // Индекс текущего выбранного класса
+	classes            []PlayerClass          // Список доступных классов
+	ClassConfig        map[string]ClassConfig // Конфигурации классов
+	AbilityCooldowns   map[string]float64     // Кулдауны способностей
+
+	// Данные врагов
+	Enemies      []Enemy // Список врагов на карте
+	CurrentEnemy *Enemy  // Текущий враг в бою
+
+	// Данные карты
+	GameMap GameMap // Игровая карта
+
+	// Ресурсы (изображения и текстуры)
+	textures              map[rune]*ebiten.Image        // Текстуры для карты (трава, стены и т.д.)
 	classImages           map[PlayerClass]*ebiten.Image // Мини-иконки для карты
-	characterImages       map[PlayerClass]*ebiten.Image // Большие изображения для CharacterSheet
-	backgroundImage       *ebiten.Image                 // Фоновое изображение
-	CurrentEnemy          *Enemy                        // Враг, с которым идёт бой
-	AbilityCooldowns      map[string]float64            // Таймеры для способностей
-	CombatLog             []string                      // Добавляем поле для лога боя
-	combatBackgroundImage *ebiten.Image                 // Новое поле для фона боя
-	ClassConfig           map[string]ClassConfig        // Мапа для классовых конфигов
-	HasSave               bool                          // Есть ли сохранение
-	FloorSelectorOpen     bool                          // Открыт ли выпадающий список
+	characterImages       map[PlayerClass]*ebiten.Image // Большие изображения для CharacterSheet и боя
+	enemyImage            *ebiten.Image                 // Изображение врага на карте
+	enemyLargeImages      map[string]*ebiten.Image      // Изображения врагов в бою
+	backgroundImage       *ebiten.Image                 // Фоновое изображение для меню
+	combatBackgroundImage *ebiten.Image                 // Фоновое изображение для боя
+
+	// UI
+	CombatLog []string // Лог боя
 }
 
 func (g *Game) Update() error {
@@ -333,6 +343,8 @@ func Start() {
 	game := &Game{
 		textures:         make(map[rune]*ebiten.Image),
 		CurrentFloor:     1,
+		MaxFloor:         1,
+		SelectedFloor:    1,
 		State:            Menu,
 		classes:          []PlayerClass{WarriorClass, MageClass, ArcherClass},
 		classImages:      make(map[PlayerClass]*ebiten.Image),

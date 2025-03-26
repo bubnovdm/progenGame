@@ -39,9 +39,6 @@ func loadAssets(g *Game) {
 	g.classImages[MageClass] = loadImage("assets/textures/mage_mini.png")
 	g.classImages[ArcherClass] = loadImage("assets/textures/archer_mini.png")
 
-	// Установим начальное изображение игрока для карты
-	g.playerImage = g.classImages[WarriorClass]
-
 	// Загрузка фоновых изображений
 	g.backgroundImage = loadImage("assets/textures/backmenu.png")
 	g.combatBackgroundImage = loadImage("assets/textures/backcombat.png")

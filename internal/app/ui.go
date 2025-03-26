@@ -86,46 +86,37 @@ func (g *Game) getInGameMenuButtons() []Button {
 }
 
 func (g *Game) getCharacterSheetButtons() []Button {
-	currentX, currentY := g.Player.X, g.Player.Y // Сохраняем текущие координаты
 	return []Button{
 		{
-			X:      400, // Кнопка "влево"
+			X:      400,
 			Y:      600,
-			Width:  60,
-			Height: 60,
+			Width:  50,
+			Height: 50,
 			Label:  "<",
 			Action: func(g *Game) {
 				g.selectedClassIndex = (g.selectedClassIndex - 1 + len(g.classes)) % len(g.classes)
-				tempPlayer := NewPlayer(g.classes[g.selectedClassIndex], g)
-				g.Player = tempPlayer // Полное обновление игрока, включая Inventory
-				g.Player.X = currentX // Восстанавливаем координаты
-				g.Player.Y = currentY
-				g.playerImage = g.classImages[g.Player.Class] // Обновляем изображение игрока
+				g.Player = NewPlayer(g.classes[g.selectedClassIndex], g)
 			},
 		},
 		{
-			X:      540, // Кнопка "вправо"
+			X:      550,
 			Y:      600,
-			Width:  60,
-			Height: 60,
+			Width:  50,
+			Height: 50,
 			Label:  ">",
 			Action: func(g *Game) {
 				g.selectedClassIndex = (g.selectedClassIndex + 1) % len(g.classes)
-				tempPlayer := NewPlayer(g.classes[g.selectedClassIndex], g)
-				g.Player = tempPlayer // Полное обновление игрока, включая Inventory
-				g.Player.X = currentX // Восстанавливаем координаты
-				g.Player.Y = currentY
-				g.playerImage = g.classImages[g.Player.Class] // Обновляем изображение игрока
+				g.Player = NewPlayer(g.classes[g.selectedClassIndex], g)
 			},
 		},
 		{
-			X:      450, // Кнопка "Play"
+			X:      400,
 			Y:      700,
-			Width:  100,
-			Height: 60,
+			Width:  200,
+			Height: 50,
 			Label:  "Play",
 			Action: func(g *Game) {
-				g.CurrentFloor = g.SelectedFloor // Устанавливаем текущий этаж
+				g.CurrentFloor = g.SelectedFloor
 				var mapType MapType
 				if g.CurrentFloor%2 == 0 {
 					mapType = OpenMap

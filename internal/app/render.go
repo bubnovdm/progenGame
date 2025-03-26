@@ -249,12 +249,12 @@ func (g *Game) drawDungeon(screen *ebiten.Image) {
 	}
 
 	// Отрисовка игрока
-	if g.playerImage != nil {
+	if img, ok := g.classImages[g.Player.Class]; ok {
 		op := &ebiten.DrawImageOptions{}
 		geom := ebiten.GeoM{}
 		geom.Translate(playerX, playerY)
 		op.GeoM = geom
-		screen.DrawImage(g.playerImage, op)
+		screen.DrawImage(img, op)
 	}
 
 	// Отрисовка полосок HP и опыта
@@ -307,7 +307,7 @@ func (g *Game) drawDungeon(screen *ebiten.Image) {
 
 	// Текст для HP и опыта
 	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("HP: %d/%d", g.Player.HP, g.Player.MaxHP), barX+5, hpY+3) // Используем g.Player.MaxHP
-	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("CurrentFloor: %d (Exp: %d/%d)", g.Player.Level, g.Player.Experience, expPerLevel), barX+5, expY+3)
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Level: %d (Exp: %d/%d)", g.Player.Level, g.Player.Experience, expPerLevel), barX+5, expY+3)
 
 	// Отображение уровня по центру (имеется в виду этаж, а не уровень персонажа)
 	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Floor: %d", g.CurrentFloor), 500, 15)
@@ -463,7 +463,7 @@ func (g *Game) drawCombat(screen *ebiten.Image) {
 	geomExp.Translate(250, 380)
 	screen.DrawImage(expFill, &ebiten.DrawImageOptions{GeoM: geomExp})
 	// Текст уровня и опыта
-	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("CurrentFloor: %d (Exp: %d/%d)", g.Player.Level, g.Player.Experience, expPerLevel), 250, 383)
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Level: %d (Exp: %d/%d)", g.Player.Level, g.Player.Experience, expPerLevel), 250, 383)
 
 	// Полоска HP врага
 	if g.CurrentEnemy != nil {
