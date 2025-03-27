@@ -1,15 +1,8 @@
 package app
 
-import "fmt"
-
-// player.go
-
-type PlayerClass uint8
-
-const (
-	WarriorClass PlayerClass = 0
-	MageClass    PlayerClass = 1
-	ArcherClass  PlayerClass = 2
+import (
+	"fmt"
+	"math/rand"
 )
 
 func (c PlayerClass) String() string {
@@ -31,36 +24,12 @@ type Item struct {
 	Price float64
 }
 
-type Skill struct {
-	Name     string
-	Level    int
-	Cooldown float64
-}
-
-// DamageType определяет тип урона
-type DamageType string
-
-const (
-	PhysicalDamage DamageType = "physical"
-	MagicalDamage  DamageType = "magical"
-)
-
-// MainStat определяет основную характеристику для урона
-type MainStat string
-
-const (
-	StrengthStat     MainStat = "strength"
-	AgilityStat      MainStat = "agility"
-	IntelligenceStat MainStat = "intelligence"
-)
-
 type Player struct {
 	ID                           string      // 16 байт
 	Name                         string      // 16 байт
 	X                            int         // 8 байт
 	Y                            int         // 8 байт
 	Inventory                    []Item      // 24 байта
-	Skills                       []Skill     // 24 байта
 	Class                        PlayerClass // 16 байт
 	MainStat                     MainStat    // 16 байт
 	DamageType                   DamageType  // 16 байт
@@ -124,7 +93,8 @@ func NewPlayer(class PlayerClass, g *Game) Player {
 		X:                            1,
 		Y:                            1,
 		Inventory:                    []Item{},
-		Skills:                       []Skill{},
+		CritChance:                   10.0 + float64(baseStats.Agility)*0.5, // Базовый шанс 10% + 0.5% за Ловкость
+		CritDamage:                   1.5,                                   // Базовый множитель 150%
 	}
 }
 
@@ -153,8 +123,8 @@ func (p *Player) LevelUp(g *Game) {
 
 	// Применяем прирост характеристик из level_up_stats
 	levelUpStats := classConfig.LevelUpStats
-	p.MaxHP += uint16(levelUpStats.MaxHP)
-	p.HP += uint16(levelUpStats.MaxHP)
+	p.MaxHP += levelUpStats.MaxHP
+	p.HP += levelUpStats.MaxHP
 	p.Strength += levelUpStats.Strength
 	p.Agility += levelUpStats.Agility
 	p.Intelligence += levelUpStats.Intelligence
@@ -165,4 +135,10 @@ func (p *Player) LevelUp(g *Game) {
 	if p.HP > p.MaxHP {
 		p.HP = p.MaxHP
 	}
+}
+
+// RollCrit возвращает true, если срабатывает критический удар
+func (p *Player) RollCrit() bool {
+	roll := rand.Float64() * 100 // Случайное число от 0 до 100
+	return roll <= p.CritChance
 }

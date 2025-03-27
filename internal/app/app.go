@@ -503,7 +503,6 @@ func Start() {
 	fmt.Printf(" |-Size of GameMap struct: %d bytes\n", unsafe.Sizeof(game.GameMap))
 	fmt.Printf(" |-Size of Enemies struct: %d bytes\n", unsafe.Sizeof(game.Enemies))
 	fmt.Printf(" |-Size of Player struct: %d bytes\n", unsafe.Sizeof(game.Player))
-	fmt.Printf("   |-Size of Player struct (Skills): %d bytes\n", unsafe.Sizeof(game.Player.Skills))
 	fmt.Printf("   |-Size of Player struct (Inventory): %d bytes\n", unsafe.Sizeof(game.Player.Inventory))
 	fmt.Printf("   |-Size of Player struct (DamageType): %d bytes\n", unsafe.Sizeof(game.Player.DamageType))
 	fmt.Printf(" |-Size of class images: %d bytes\n", unsafe.Sizeof(game.classImages))

@@ -5,24 +5,6 @@ import (
 	"math/rand"
 )
 
-const (
-	MapSize          = 40
-	PathLength       = 100
-	StartSymbol      = 'S'
-	ExitSymbol       = 'X'
-	PathSymbol       = '1'
-	EmptySymbol      = '0'
-	BackgroundSymbol = 'G'
-	WallSymbol       = 'W'
-)
-
-type MapType int
-
-const (
-	OpenMap MapType = iota
-	DungeonMap
-)
-
 type Layer [MapSize][MapSize]uint8
 
 type GameMap struct {
@@ -110,11 +92,6 @@ func GeneratePath(m *GameMap, startX, startY, endX, endY int) {
 }
 
 func GenerateRoom(m *GameMap) {
-	const (
-		maxRooms    = 10
-		minRoomSize = 4
-		maxRoomSize = 8
-	)
 
 	type Room struct {
 		X, Y, W, H int
