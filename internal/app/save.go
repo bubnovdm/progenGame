@@ -7,18 +7,25 @@ import (
 )
 
 type GameSave struct {
-	Player        Player      `json:"player"`         // Характеристики персонажа
-	MaxFloor      int         `json:"max_floor"`      // Максимальный этаж, до которого дошел игрок
-	CurrentFloor  int         `json:"current_floor"`  // Текущий этаж
-	SelectedClass PlayerClass `json:"selected_class"` // Выбранный класс
+	Player         Player      `json:"player"`          // Характеристики персонажа
+	MaxFloor       int         `json:"max_floor"`       // Максимальный этаж, до которого дошел игрок
+	CurrentFloor   int         `json:"current_floor"`   // Текущий этаж
+	SelectedClass  PlayerClass `json:"selected_class"`  // Выбранный класс
+	AvailableBuffs []BuffData  `json:"available_buffs"` // Список бафов игрока
 }
 
 func (g *Game) SaveGame() error {
+	buffData := make([]BuffData, len(g.AvailableBuffs))
+	for i, buff := range g.AvailableBuffs {
+		buffData[i] = ToBuffData(buff)
+	}
+
 	saveData := GameSave{
-		Player:        g.Player,
-		MaxFloor:      g.CurrentFloor,
-		CurrentFloor:  g.CurrentFloor,
-		SelectedClass: g.Player.Class,
+		Player:         g.Player,
+		CurrentFloor:   g.CurrentFloor,
+		MaxFloor:       g.MaxFloor,
+		SelectedClass:  g.Player.Class,
+		AvailableBuffs: buffData,
 	}
 
 	data, err := json.MarshalIndent(saveData, "", "  ")
@@ -51,14 +58,17 @@ func (g *Game) LoadGame() error {
 		return fmt.Errorf("failed to unmarshal save data: %v", err)
 	}
 
-	// Восстанавливаем данные
 	g.Player = saveData.Player
 	g.CurrentFloor = saveData.CurrentFloor
 	g.MaxFloor = saveData.MaxFloor
 	g.SelectedFloor = saveData.CurrentFloor
 	g.Player.Class = saveData.SelectedClass
 
-	// Генерируем карту для текущего этажа
+	g.AvailableBuffs = make([]Buff, len(saveData.AvailableBuffs))
+	for i, buffData := range saveData.AvailableBuffs {
+		g.AvailableBuffs[i] = FromBuffData(buffData)
+	}
+
 	var mapType MapType
 	if g.CurrentFloor%2 == 0 {
 		mapType = OpenMap
@@ -68,6 +78,9 @@ func (g *Game) LoadGame() error {
 	g.GameMap = GenerateMap(mapType)
 	g.moveToStartPosition()
 	g.spawnEnemies()
+
+	// Предполагается, что ApplyBuffs есть в другом файле
+	g.ApplyBuffs()
 
 	fmt.Println("Game loaded successfully")
 	return nil

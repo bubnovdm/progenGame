@@ -23,3 +23,13 @@ func (e *Enemy) ApplyEffect(effect Effect) bool {
 	e.ActiveEffects = append(e.ActiveEffects, effect)
 	return true
 }
+
+// Удаление врага по ID
+func removeEnemy(enemies []Enemy, id string) []Enemy {
+	for i, enemy := range enemies {
+		if enemy.ID == id {
+			return append(enemies[:i], enemies[i+1:]...)
+		}
+	}
+	return enemies
+}

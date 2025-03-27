@@ -35,16 +35,7 @@ func (g *Game) autoAttack() {
 		g.CurrentEnemy.HP -= effectiveDamage
 		g.CombatLog = append(g.CombatLog, fmt.Sprintf("Autoattack hits %s for %d %s damage. Enemy HP: %d", g.CurrentEnemy.Name, effectiveDamage, g.Player.DamageType, g.CurrentEnemy.HP))
 		fmt.Printf("Autoattack hits %s for %d %s damage. Enemy HP: %d\n", g.CurrentEnemy.Name, effectiveDamage, g.Player.DamageType, g.CurrentEnemy.HP) // Отладка
-		if g.CurrentEnemy.HP <= 0 {
-			g.CombatLog = append(g.CombatLog, fmt.Sprintf("%s defeated!", g.CurrentEnemy.Name))
-			levelUpMsg := g.Player.AddExperience(20, g) // +20 опыта за врага
-			if levelUpMsg != "" {
-				g.CombatLog = append(g.CombatLog, levelUpMsg)
-			}
-			g.Enemies = removeEnemy(g.Enemies, g.CurrentEnemy.ID)
-			g.CurrentEnemy = nil
-			g.State = Dungeon
-		}
+		// Убрали обработку смерти врага
 	}
 }
 
@@ -204,15 +195,5 @@ func (g *Game) useAbility(ability string) {
 			g.CombatLog = append(g.CombatLog, fmt.Sprintf("Cannot apply Rapid Shot to %s: too many effects!", g.CurrentEnemy.Name))
 		}
 	}
-
-	if g.CurrentEnemy.HP <= 0 {
-		g.CombatLog = append(g.CombatLog, fmt.Sprintf("%s defeated!", g.CurrentEnemy.Name))
-		levelUpMsg := g.Player.AddExperience(20, g) // +20 опыта за врага
-		if levelUpMsg != "" {
-			g.CombatLog = append(g.CombatLog, levelUpMsg)
-		}
-		g.Enemies = removeEnemy(g.Enemies, g.CurrentEnemy.ID)
-		g.CurrentEnemy = nil
-		g.State = Dungeon
-	}
+	// Убрали обработку смерти врага
 }

@@ -3,7 +3,10 @@ package app
 import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"golang.org/x/image/font"
+	"golang.org/x/image/font/opentype"
 	"log"
+	"os"
 )
 
 func loadImage(path string) *ebiten.Image {
@@ -42,4 +45,40 @@ func loadAssets(g *Game) {
 	// Загрузка фоновых изображений
 	g.backgroundImage = loadImage("assets/textures/backmenu.png")
 	g.combatBackgroundImage = loadImage("assets/textures/backcombat.png")
+}
+
+// Новая функция для загрузки шрифта
+func LoadFont(path string, size float64) font.Face {
+	// Читаем файл шрифта
+	data, err := os.ReadFile(path)
+	if err != nil {
+		log.Fatalf("Failed to read font file %s: %v", path, err)
+	}
+	log.Printf("Successfully read font file %s, size: %d bytes", path, len(data))
+
+	// Проверяем, не пустой ли файл
+	if len(data) == 0 {
+		log.Fatalf("Font file %s is empty", path)
+	}
+
+	// Парсим TTF-шрифт
+	ttfFont, err := opentype.Parse(data)
+	if err != nil {
+		log.Fatalf("Failed to parse font %s: %v", path, err)
+	}
+	log.Printf("Successfully parsed font %s", path)
+
+	// Создаём шрифт нужного размера
+	face, err := opentype.NewFace(ttfFont, &opentype.FaceOptions{
+		Size:    size,
+		DPI:     72,
+		Hinting: font.HintingFull,
+	})
+	if err != nil {
+		log.Fatalf("Failed to create font face for %s: %v", path, err)
+	}
+	log.Printf("Successfully created font face for %s", path)
+
+	return face
+
 }

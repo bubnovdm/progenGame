@@ -55,24 +55,26 @@ const (
 )
 
 type Player struct {
-	ID           string      // 16 байт
-	Name         string      // 16 байт
-	X            int         // 8 байт
-	Y            int         // 8 байт
-	Inventory    []Item      // 24 байта
-	Skills       []Skill     // 24 байта
-	Class        PlayerClass // 16 байт
-	MainStat     MainStat    // 16 байт
-	DamageType   DamageType  // 16 байт
-	HP           uint16      // 2 байта
-	MaxHP        uint16      // 2 байта
-	Experience   uint8       // 1 байт
-	Level        uint8       // 1 байт
-	Strength     uint8       // 1 байт
-	Agility      uint8       // 1 байт
-	Intelligence uint8       // 1 байт
-	PhDefense    uint8       // 1 байт
-	MgDefense    uint8       // 1 байт
+	ID                           string      // 16 байт
+	Name                         string      // 16 байт
+	X                            int         // 8 байт
+	Y                            int         // 8 байт
+	Inventory                    []Item      // 24 байта
+	Skills                       []Skill     // 24 байта
+	Class                        PlayerClass // 16 байт
+	MainStat                     MainStat    // 16 байт
+	DamageType                   DamageType  // 16 байт
+	AutoAttackCooldownMultiplier float64     // 8 байт
+	HP                           uint16      // 2 байта
+	MaxHP                        uint16      // 2 байта
+	Strength                     uint16      // 2 байта
+	Agility                      uint16      // 2 байта
+	Intelligence                 uint16      // 2 байта
+	PhDefense                    uint16      // 2 байта
+	MgDefense                    uint16      // 2 байта
+	Experience                   uint8       // 1 байт
+	Level                        uint8       // 1 байт
+
 }
 
 func NewPlayer(class PlayerClass, g *Game) Player {
@@ -104,22 +106,23 @@ func NewPlayer(class PlayerClass, g *Game) Player {
 
 	baseStats := classConfig.BaseStats
 	return Player{
-		Class:        class,
-		Level:        1,
-		Experience:   0,
-		HP:           uint16(baseStats.MaxHP),
-		MaxHP:        uint16(baseStats.MaxHP),
-		Strength:     uint8(baseStats.Strength),
-		Agility:      uint8(baseStats.Agility),
-		Intelligence: uint8(baseStats.Intelligence),
-		PhDefense:    uint8(baseStats.PhDefense),
-		MgDefense:    uint8(baseStats.MgDefense),
-		MainStat:     classConfig.MainStat,
-		DamageType:   classConfig.DamageType,
-		X:            1,
-		Y:            1,
-		Inventory:    []Item{},
-		Skills:       []Skill{},
+		Class:                        class,
+		Level:                        1,
+		Experience:                   0,
+		HP:                           baseStats.MaxHP,
+		MaxHP:                        baseStats.MaxHP,
+		Strength:                     baseStats.Strength,
+		Agility:                      baseStats.Agility,
+		Intelligence:                 baseStats.Intelligence,
+		PhDefense:                    baseStats.PhDefense,
+		MgDefense:                    baseStats.MgDefense,
+		MainStat:                     classConfig.MainStat,
+		DamageType:                   classConfig.DamageType,
+		AutoAttackCooldownMultiplier: 1.0,
+		X:                            1,
+		Y:                            1,
+		Inventory:                    []Item{},
+		Skills:                       []Skill{},
 	}
 }
 
@@ -150,11 +153,11 @@ func (p *Player) LevelUp(g *Game) {
 	levelUpStats := classConfig.LevelUpStats
 	p.MaxHP += uint16(levelUpStats.MaxHP)
 	p.HP += uint16(levelUpStats.MaxHP)
-	p.Strength += uint8(levelUpStats.Strength)
-	p.Agility += uint8(levelUpStats.Agility)
-	p.Intelligence += uint8(levelUpStats.Intelligence)
-	p.PhDefense += uint8(levelUpStats.PhDefense)
-	p.MgDefense += uint8(levelUpStats.MgDefense)
+	p.Strength += levelUpStats.Strength
+	p.Agility += levelUpStats.Agility
+	p.Intelligence += levelUpStats.Intelligence
+	p.PhDefense += levelUpStats.PhDefense
+	p.MgDefense += levelUpStats.MgDefense
 
 	// Убедимся, что HP не превышает MaxHP
 	if p.HP > p.MaxHP {

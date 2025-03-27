@@ -8,21 +8,21 @@ import (
 
 // ClassStats описывает базовые характеристики класса
 type ClassStats struct {
-	MaxHP        int `json:"max_hp"`
-	Strength     int `json:"strength"`
-	Agility      int `json:"agility"`
-	Intelligence int `json:"intelligence"`
-	PhDefense    int `json:"ph_defense"`
-	MgDefense    int `json:"mg_defense"`
+	MaxHP        uint16 `json:"max_hp"`
+	Strength     uint16 `json:"strength"`
+	Agility      uint16 `json:"agility"`
+	Intelligence uint16 `json:"intelligence"`
+	PhDefense    uint16 `json:"ph_defense"`
+	MgDefense    uint16 `json:"mg_defense"`
 }
 
 type LevelUpStats struct {
-	MaxHP        int `json:"max_hp"`
-	Strength     int `json:"strength"`
-	Agility      int `json:"agility"`
-	Intelligence int `json:"intelligence"`
-	PhDefense    int `json:"ph_defense"`
-	MgDefense    int `json:"mg_defense"`
+	MaxHP        uint16 `json:"max_hp"`
+	Strength     uint16 `json:"strength"`
+	Agility      uint16 `json:"agility"`
+	Intelligence uint16 `json:"intelligence"`
+	PhDefense    uint16 `json:"ph_defense"`
+	MgDefense    uint16 `json:"mg_defense"`
 }
 
 // ClassConfig описывает конфигурацию класса

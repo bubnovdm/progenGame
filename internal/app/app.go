@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
+	"golang.org/x/image/font"
 	"log"
 	"os"
 	"unsafe"
@@ -37,6 +38,7 @@ type Game struct {
 	classes            []PlayerClass          // Список доступных классов
 	ClassConfig        map[string]ClassConfig // Конфигурации классов
 	AbilityCooldowns   map[string]float64     // Кулдауны способностей
+	AvailableBuffs     []Buff                 // Бафы, которые можно выбрать
 
 	// Данные врагов
 	Enemies      []Enemy // Список врагов на карте
@@ -56,6 +58,9 @@ type Game struct {
 
 	// UI
 	CombatLog []string // Лог боя
+
+	// Шрифт
+	Font font.Face // Поле для хранения шрифта
 }
 
 func (g *Game) Update() error {
@@ -93,16 +98,27 @@ func (g *Game) Update() error {
 				g.CombatLog = append(g.CombatLog, logMessage)
 			}
 
-			// Проверяем, не умер ли враг
+			// Проверяем, не умер ли враг от эффекта
 			if g.CurrentEnemy.HP <= 0 {
 				g.CombatLog = append(g.CombatLog, fmt.Sprintf("%s defeated!", g.CurrentEnemy.Name))
 				levelUpMsg := g.Player.AddExperience(20, g)
 				if levelUpMsg != "" {
 					g.CombatLog = append(g.CombatLog, levelUpMsg)
 				}
+				fmt.Printf("Enemies before removal: %d\n", len(g.Enemies))
 				g.Enemies = removeEnemy(g.Enemies, g.CurrentEnemy.ID)
+				fmt.Printf("Enemies after removal: %d\n", len(g.Enemies))
 				g.CurrentEnemy = nil
 				g.State = Dungeon
+				if len(g.Enemies) == 0 {
+					newBuff := GetRandomBuff()
+					fmt.Printf("Received buff: %s", newBuff.Name())
+					g.AvailableBuffs = append(g.AvailableBuffs, newBuff)
+					g.CombatLog = append(g.CombatLog, fmt.Sprintf("Received buff: %s", newBuff.Name()))
+					newBuff.Apply(&g.Player)
+				} else {
+					fmt.Printf("Buff not awarded, enemies remaining: %d\n", len(g.Enemies))
+				}
 				break // Прерываем цикл, так как враг мёртв
 			}
 
@@ -221,22 +237,119 @@ func (g *Game) Update() error {
 		}
 		if g.AutoAttackCooldown <= 0 && g.CurrentEnemy != nil {
 			g.autoAttack()
-			g.AutoAttackCooldown = 2.0
+			// Проверяем, не умер ли враг после автоатаки
+			if g.CurrentEnemy.HP <= 0 {
+				g.CombatLog = append(g.CombatLog, fmt.Sprintf("%s defeated!", g.CurrentEnemy.Name))
+				levelUpMsg := g.Player.AddExperience(20, g)
+				if levelUpMsg != "" {
+					g.CombatLog = append(g.CombatLog, levelUpMsg)
+				}
+				fmt.Printf("Enemies before removal: %d\n", len(g.Enemies))
+				g.Enemies = removeEnemy(g.Enemies, g.CurrentEnemy.ID)
+				fmt.Printf("Enemies after removal: %d\n", len(g.Enemies))
+				g.CurrentEnemy = nil
+				g.State = Dungeon
+				if len(g.Enemies) == 0 {
+					newBuff := GetRandomBuff()
+					g.AvailableBuffs = append(g.AvailableBuffs, newBuff)
+					g.CombatLog = append(g.CombatLog, fmt.Sprintf("Received buff: %s", newBuff.Name()))
+					newBuff.Apply(&g.Player)
+				} else {
+					fmt.Printf("Buff not awarded, enemies remaining: %d\n", len(g.Enemies))
+				}
+			} else {
+				// Учитываем множитель скорости автоатак, если враг еще жив
+				g.AutoAttackCooldown = 2.0 * g.Player.AutoAttackCooldownMultiplier
+			}
 		}
 
 		if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+			// Удаляем врага из списка, чтобы он не мешал
+			if g.CurrentEnemy != nil {
+				g.Enemies = removeEnemy(g.Enemies, g.CurrentEnemy.ID)
+				fmt.Printf("Enemies after escape: %d\n", len(g.Enemies))
+				if len(g.Enemies) == 0 {
+					newBuff := GetRandomBuff()
+					g.AvailableBuffs = append(g.AvailableBuffs, newBuff)
+					g.CombatLog = append(g.CombatLog, fmt.Sprintf("Received buff: %s", newBuff.Name()))
+					newBuff.Apply(&g.Player)
+				}
+			}
 			g.State = Dungeon
 			g.CurrentEnemy = nil
 			return nil
 		}
 		if inpututil.IsKeyJustPressed(ebiten.Key1) {
 			g.useAbility("1")
+			// Проверяем, не умер ли враг после способности
+			if g.CurrentEnemy != nil && g.CurrentEnemy.HP <= 0 {
+				g.CombatLog = append(g.CombatLog, fmt.Sprintf("%s defeated!", g.CurrentEnemy.Name))
+				levelUpMsg := g.Player.AddExperience(20, g)
+				if levelUpMsg != "" {
+					g.CombatLog = append(g.CombatLog, levelUpMsg)
+				}
+				fmt.Printf("Enemies before removal: %d\n", len(g.Enemies))
+				g.Enemies = removeEnemy(g.Enemies, g.CurrentEnemy.ID)
+				fmt.Printf("Enemies after removal: %d\n", len(g.Enemies))
+				g.CurrentEnemy = nil
+				g.State = Dungeon
+				if len(g.Enemies) == 0 {
+					newBuff := GetRandomBuff()
+					g.AvailableBuffs = append(g.AvailableBuffs, newBuff)
+					g.CombatLog = append(g.CombatLog, fmt.Sprintf("Received buff: %s", newBuff.Name()))
+					newBuff.Apply(&g.Player)
+				} else {
+					fmt.Printf("Buff not awarded, enemies remaining: %d\n", len(g.Enemies))
+				}
+			}
 		}
 		if inpututil.IsKeyJustPressed(ebiten.Key2) {
 			g.useAbility("2")
+			// Проверяем, не умер ли враг после способности
+			if g.CurrentEnemy != nil && g.CurrentEnemy.HP <= 0 {
+				g.CombatLog = append(g.CombatLog, fmt.Sprintf("%s defeated!", g.CurrentEnemy.Name))
+				levelUpMsg := g.Player.AddExperience(20, g)
+				if levelUpMsg != "" {
+					g.CombatLog = append(g.CombatLog, levelUpMsg)
+				}
+				fmt.Printf("Enemies before removal: %d\n", len(g.Enemies))
+				g.Enemies = removeEnemy(g.Enemies, g.CurrentEnemy.ID)
+				fmt.Printf("Enemies after removal: %d\n", len(g.Enemies))
+				g.CurrentEnemy = nil
+				g.State = Dungeon
+				if len(g.Enemies) == 0 {
+					newBuff := GetRandomBuff()
+					g.AvailableBuffs = append(g.AvailableBuffs, newBuff)
+					g.CombatLog = append(g.CombatLog, fmt.Sprintf("Received buff: %s", newBuff.Name()))
+					newBuff.Apply(&g.Player)
+				} else {
+					fmt.Printf("Buff not awarded, enemies remaining: %d\n", len(g.Enemies))
+				}
+			}
 		}
 		if inpututil.IsKeyJustPressed(ebiten.Key3) {
 			g.useAbility("3")
+			// Проверяем, не умер ли враг после способности
+			if g.CurrentEnemy != nil && g.CurrentEnemy.HP <= 0 {
+				g.CombatLog = append(g.CombatLog, fmt.Sprintf("%s defeated!", g.CurrentEnemy.Name))
+				levelUpMsg := g.Player.AddExperience(20, g)
+				if levelUpMsg != "" {
+					g.CombatLog = append(g.CombatLog, levelUpMsg)
+				}
+				fmt.Printf("Enemies before removal: %d\n", len(g.Enemies))
+				g.Enemies = removeEnemy(g.Enemies, g.CurrentEnemy.ID)
+				fmt.Printf("Enemies after removal: %d\n", len(g.Enemies))
+				g.CurrentEnemy = nil
+				g.State = Dungeon
+				if len(g.Enemies) == 0 {
+					newBuff := GetRandomBuff()
+					g.AvailableBuffs = append(g.AvailableBuffs, newBuff)
+					g.CombatLog = append(g.CombatLog, fmt.Sprintf("Received buff: %s", newBuff.Name()))
+					newBuff.Apply(&g.Player)
+				} else {
+					fmt.Printf("Buff not awarded, enemies remaining: %d\n", len(g.Enemies))
+				}
+			}
 		}
 
 	case Dungeon:
@@ -264,6 +377,8 @@ func (g *Game) Update() error {
 			g.GameMap = GenerateMap(mapType)
 			g.moveToStartPosition()
 			g.spawnEnemies()
+			// Отладка: сколько врагов заспавнилось на новом этаже
+			fmt.Printf("Spawned %d enemies on floor %d\n", len(g.Enemies), g.CurrentFloor)
 			g.moveDelay = 10
 
 			// Сохраняем игру
@@ -299,7 +414,7 @@ func (g *Game) Update() error {
 				if g.isAdjacent(g.Player.X, g.Player.Y, enemy.X, enemy.Y) {
 					g.CurrentEnemy = &enemy
 					g.State = CombatState
-					g.AutoAttackCooldown = 2.0
+					g.AutoAttackCooldown = 2.0 * g.Player.AutoAttackCooldownMultiplier
 					return nil
 				}
 			}
@@ -309,6 +424,7 @@ func (g *Game) Update() error {
 	return nil
 }
 
+// Нужен для имплиментации интерфейса ebiten
 func (g *Game) Draw(screen *ebiten.Image) {
 	switch g.State {
 	case Menu:
@@ -324,6 +440,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 }
 
+// Нужен для имплиментации интерфейса ebiten
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
 	return 1000, 1000
 }
@@ -339,6 +456,11 @@ func Start() {
 	if err := LoadAbilityConfigs("assets/abilities/abilities.json"); err != nil {
 		log.Fatalf("Failed to load ability configs: %v", err)
 	}
+	/*
+		if err := LoadFont("assets/fonts/PressStart2P-Regular.ttf", 24); err != nil {
+			log.Fatalf("Failed to load font: %v", err)
+		}
+	*/
 
 	game := &Game{
 		textures:         make(map[rune]*ebiten.Image),
@@ -353,6 +475,7 @@ func Start() {
 		CombatLog:        []string{},
 		enemyLargeImages: make(map[string]*ebiten.Image),
 		ClassConfig:      ToMap(),
+		AvailableBuffs:   make([]Buff, 0), // Инициализируем пустой слайс
 	}
 
 	// Выводим размер структуры Game
