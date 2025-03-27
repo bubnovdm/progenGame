@@ -65,6 +65,8 @@ type Player struct {
 	MainStat                     MainStat    // 16 байт
 	DamageType                   DamageType  // 16 байт
 	AutoAttackCooldownMultiplier float64     // 8 байт
+	CritChance                   float64     // 8 байт - шанс крита в %
+	CritDamage                   float64     // 8 байт - множитель крита (коэффициент)
 	HP                           uint16      // 2 байта
 	MaxHP                        uint16      // 2 байта
 	Strength                     uint16      // 2 байта

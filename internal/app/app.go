@@ -7,6 +7,7 @@ import (
 	"golang.org/x/image/font"
 	"log"
 	"os"
+	"sync"
 	"unsafe"
 )
 
@@ -382,9 +383,11 @@ func (g *Game) Update() error {
 			g.moveDelay = 10
 
 			// Сохраняем игру
-			if err := g.SaveGame(); err != nil {
-				log.Printf("Failed to save game: %v", err)
-			}
+			go func() {
+				if err := g.SaveGame(); err != nil {
+					log.Printf("Save error: %v", err)
+				}
+			}()
 
 			return nil
 		}
@@ -447,15 +450,32 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 
 func Start() {
 	// Загружаем конфигурации
-	if err := LoadEnemyConfigs("assets/enemies/enemies.json"); err != nil {
-		log.Fatalf("Failed to load enemy configs: %v", err)
-	}
-	if err := LoadClassConfigs("assets/classes/classes.json"); err != nil {
-		log.Fatalf("Failed to load class configs: %v", err)
-	}
-	if err := LoadAbilityConfigs("assets/abilities/abilities.json"); err != nil {
-		log.Fatalf("Failed to load ability configs: %v", err)
-	}
+	var wg sync.WaitGroup
+	wg.Add(3)
+	go func() {
+		defer wg.Done()
+		if err := LoadEnemyConfigs("assets/enemies/enemies.json"); err != nil {
+			log.Fatalf("Failed to load enemy configs: %v", err)
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		if err := LoadClassConfigs("assets/classes/classes.json"); err != nil {
+			log.Fatalf("Failed to load class configs: %v", err)
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		if err := LoadAbilityConfigs("assets/abilities/abilities.json"); err != nil {
+			log.Fatalf("Failed to load ability configs: %v", err)
+		}
+
+	}()
+	wg.Wait()
+
+	// Надо бы как-то доработать
 	/*
 		if err := LoadFont("assets/fonts/PressStart2P-Regular.ttf", 24); err != nil {
 			log.Fatalf("Failed to load font: %v", err)
