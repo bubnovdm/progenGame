@@ -2,23 +2,25 @@
   "player": {
     "ID": "",
     "Name": "",
-    "X": 7,
-    "Y": 24,
+    "X": 16,
+    "Y": 37,
     "Inventory": [],
     "Skills": [],
     "Class": 1,
     "MainStat": "intelligence",
     "DamageType": "magical",
-    "AutoAttackCooldownMultiplier": 0.9025,
-    "HP": 186,
-    "MaxHP": 196,
-    "Strength": 17,
-    "Agility": 17,
-    "Intelligence": 76,
-    "PhDefense": 15,
-    "MgDefense": 43,
-    "Experience": 40,
-    "Level": 13
+    "AutoAttackCooldownMultiplier": 0.7350918906249998,
+    "CritChance": 0,
+    "CritDamage": 0,
+    "HP": 220,
+    "MaxHP": 220,
+    "Strength": 20,
+    "Agility": 20,
+    "Intelligence": 59,
+    "PhDefense": 18,
+    "MgDefense": 52,
+    "Experience": 60,
+    "Level": 16
   },
   "max_floor": 11,
   "current_floor": 11,
@@ -26,27 +28,7 @@
   "available_buffs": [
     {
       "name": "Main Stat Boost",
-      "amount": 5,
-      "speed_increase": 0
-    },
-    {
-      "name": "Main Stat Boost",
-      "amount": 5,
-      "speed_increase": 0
-    },
-    {
-      "name": "Health Boost",
-      "amount": 10,
-      "speed_increase": 0
-    },
-    {
-      "name": "Main Stat Boost",
-      "amount": 5,
-      "speed_increase": 0
-    },
-    {
-      "name": "Main Stat Boost",
-      "amount": 5,
+      "amount": 2,
       "speed_increase": 0
     },
     {
@@ -60,18 +42,38 @@
       "speed_increase": 0.05
     },
     {
-      "name": "Main Stat Boost",
-      "amount": 5,
-      "speed_increase": 0
+      "name": "Attack Speed Boost",
+      "amount": 0,
+      "speed_increase": 0.05
     },
     {
-      "name": "Main Stat Boost",
-      "amount": 5,
-      "speed_increase": 0
+      "name": "Attack Speed Boost",
+      "amount": 0,
+      "speed_increase": 0.05
     },
     {
       "name": "Health Boost",
       "amount": 10,
+      "speed_increase": 0
+    },
+    {
+      "name": "Attack Speed Boost",
+      "amount": 0,
+      "speed_increase": 0.05
+    },
+    {
+      "name": "Health Boost",
+      "amount": 10,
+      "speed_increase": 0
+    },
+    {
+      "name": "Attack Speed Boost",
+      "amount": 0,
+      "speed_increase": 0.05
+    },
+    {
+      "name": "Main Stat Boost",
+      "amount": 2,
       "speed_increase": 0
     }
   ]

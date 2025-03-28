@@ -26,8 +26,12 @@ func (g *Game) autoAttack() {
 			defense = 0
 		}
 
-		// Новая формула: damage = mainStat * (100 / (100 + defense))
+		// Проверяем, сработал ли критический удар
+		isCrit := g.Player.RollCrit()
 		effectiveDamage := int(float64(damage) * (100.0 / (100.0 + float64(defense))))
+		if isCrit {
+			effectiveDamage = int(float64(effectiveDamage) * g.Player.CritDamage)
+		}
 		if effectiveDamage < 3 {
 			effectiveDamage = 3 // Минимальный урон 3
 		}

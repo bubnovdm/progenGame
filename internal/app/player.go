@@ -131,6 +131,9 @@ func (p *Player) LevelUp(g *Game) {
 	p.PhDefense += levelUpStats.PhDefense
 	p.MgDefense += levelUpStats.MgDefense
 
+	// Пересчитываем CritChance с учётом нового значения Agility
+	p.CritChance = 10.0 + float64(p.Agility)*0.5
+
 	// Убедимся, что HP не превышает MaxHP
 	if p.HP > p.MaxHP {
 		p.HP = p.MaxHP
