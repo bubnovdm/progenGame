@@ -27,6 +27,7 @@ func (e *DotEffect) Update(dt float64, target *Enemy, g *Game) (logMessage strin
 	if e.TickTimer <= 0 {
 		target.HP -= e.DamagePerTick
 		e.TickTimer = e.TickInterval // Сбрасываем таймер тика
+		g.UpdateDamageStat(e.Name, e.DamagePerTick)
 		return fmt.Sprintf("%s takes %d %s damage. Enemy HP: %d", target.Name, e.DamagePerTick, e.Name, target.HP)
 	}
 	return ""
@@ -51,6 +52,7 @@ func (e *RapidShotEffect) Update(dt float64, target *Enemy, g *Game) (logMessage
 		target.HP -= e.DamagePerHit
 		e.HitsRemaining--
 		e.TimeUntilNext = e.HitInterval
+		g.UpdateDamageStat(e.Name, e.DamagePerHit)
 		return fmt.Sprintf("%s hits %s for %d damage. Enemy HP: %d", e.Name, target.Name, e.DamagePerHit, target.HP)
 	}
 	return ""

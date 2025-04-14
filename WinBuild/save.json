@@ -2,24 +2,33 @@
   "player": {
     "ID": "",
     "Name": "",
-    "X": 6,
-    "Y": 27,
+    "X": 13,
+    "Y": 18,
     "Inventory": [],
-    "Skills": [],
     "Class": 1,
     "MainStat": "intelligence",
     "DamageType": "magical",
-    "HP": 79,
-    "MaxHP": 104,
-    "Experience": 40,
-    "Level": 4,
-    "Strength": 8,
-    "Agility": 8,
+    "AutoAttackCooldownMultiplier": 1,
+    "CritChance": 13.5,
+    "CritDamage": 1.5,
+    "HP": 96,
+    "MaxHP": 96,
+    "Strength": 7,
+    "Agility": 7,
     "Intelligence": 18,
-    "PhDefense": 6,
-    "MgDefense": 16
+    "PhDefense": 5,
+    "MgDefense": 13,
+    "Experience": 40,
+    "Level": 3
   },
-  "max_floor": 5,
-  "current_floor": 5,
-  "selected_class": 1
+  "max_floor": 2,
+  "current_floor": 2,
+  "selected_class": 1,
+  "available_buffs": [
+    {
+      "name": "Main Stat Boost",
+      "amount": 2,
+      "speed_increase": 0
+    }
+  ]
 }

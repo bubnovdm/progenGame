@@ -19,6 +19,13 @@ const (
 	MagicalDamage  DamageType = "magical"
 )
 
+const (
+	minimalAADamage    = 3
+	minimalSpellDamage = 3
+	minimalDoTDamage   = 1
+	minimalEnemyDamage = 3
+)
+
 // MainStat определяет основную характеристику для урона
 type MainStat string
 
@@ -52,4 +59,12 @@ const (
 	maxRooms    = 10
 	minRoomSize = 4
 	maxRoomSize = 8
+)
+
+// Размер выпадающего списка в CharacterSheet
+const (
+	floorButtonWidth  = 200
+	floorButtonHeight = 30
+	floorButtonX      = 700
+	floorButtonY      = 360
 )

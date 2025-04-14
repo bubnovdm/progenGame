@@ -32,14 +32,15 @@ func (g *Game) autoAttack() {
 		if isCrit {
 			effectiveDamage = int(float64(effectiveDamage) * g.Player.CritDamage)
 		}
-		if effectiveDamage < 3 {
-			effectiveDamage = 3 // Минимальный урон 3
+		if effectiveDamage < minimalAADamage {
+			effectiveDamage = minimalAADamage // Минимальный урон 3
 		}
 
 		g.CurrentEnemy.HP -= effectiveDamage
 		g.CombatLog = append(g.CombatLog, fmt.Sprintf("Autoattack hits %s for %d %s damage. Enemy HP: %d", g.CurrentEnemy.Name, effectiveDamage, g.Player.DamageType, g.CurrentEnemy.HP))
 		fmt.Printf("Autoattack hits %s for %d %s damage. Enemy HP: %d\n", g.CurrentEnemy.Name, effectiveDamage, g.Player.DamageType, g.CurrentEnemy.HP) // Отладка
-		// Убрали обработку смерти врага
+		// Обновляем статистику
+		g.UpdateDamageStat("Auto Attack", effectiveDamage)
 	}
 }
 
@@ -107,8 +108,8 @@ func (g *Game) useAbility(ability string) {
 		effectiveDamage = int(float64(damage) * (100.0 / (100.0 + float64(defense))))
 	}
 
-	if effectiveDamage < 3 {
-		effectiveDamage = 3 // Минимальный урон 3
+	if effectiveDamage < minimalSpellDamage {
+		effectiveDamage = minimalSpellDamage // Минимальный урон 3
 	}
 
 	// Применяем мгновенный урон
@@ -116,6 +117,8 @@ func (g *Game) useAbility(ability string) {
 	g.AbilityCooldowns[ability] = config.Cooldown
 	g.CombatLog = append(g.CombatLog, fmt.Sprintf("Used %s for %d %s damage. Enemy HP: %d", config.Name, effectiveDamage, g.Player.DamageType, g.CurrentEnemy.HP))
 	fmt.Printf("Used %s for %d %s damage. Enemy HP: %d\n", config.Name, effectiveDamage, g.Player.DamageType, g.CurrentEnemy.HP) // Отладка
+
+	g.UpdateDamageStat(config.Name, effectiveDamage)
 
 	// Проверяем дополнительные эффекты
 	if config.DotDuration > 0 {
@@ -143,8 +146,8 @@ func (g *Game) useAbility(ability string) {
 			}
 			dotDamage = int(float64(dotDamage) * (100.0 / (100.0 + float64(defense))) / config.DotDuration)
 		}
-		if dotDamage < 1 {
-			dotDamage = 1
+		if dotDamage < minimalDoTDamage {
+			dotDamage = minimalDoTDamage
 		}
 
 		// Определяем имя эффекта в зависимости от класса
@@ -199,5 +202,4 @@ func (g *Game) useAbility(ability string) {
 			g.CombatLog = append(g.CombatLog, fmt.Sprintf("Cannot apply Rapid Shot to %s: too many effects!", g.CurrentEnemy.Name))
 		}
 	}
-	// Убрали обработку смерти врага
 }

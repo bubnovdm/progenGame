@@ -2,78 +2,32 @@
   "player": {
     "ID": "",
     "Name": "",
-    "X": 16,
-    "Y": 37,
+    "X": 31,
+    "Y": 38,
     "Inventory": [],
-    "Skills": [],
-    "Class": 1,
-    "MainStat": "intelligence",
-    "DamageType": "magical",
-    "AutoAttackCooldownMultiplier": 0.7350918906249998,
-    "CritChance": 0,
-    "CritDamage": 0,
-    "HP": 220,
-    "MaxHP": 220,
-    "Strength": 20,
-    "Agility": 20,
-    "Intelligence": 59,
-    "PhDefense": 18,
-    "MgDefense": 52,
-    "Experience": 60,
-    "Level": 16
+    "Class": 0,
+    "MainStat": "strength",
+    "DamageType": "physical",
+    "AutoAttackCooldownMultiplier": 1,
+    "CritChance": 13,
+    "CritDamage": 1.5,
+    "HP": 129,
+    "MaxHP": 142,
+    "Strength": 13,
+    "Agility": 6,
+    "Intelligence": 6,
+    "PhDefense": 10,
+    "MgDefense": 4,
+    "Experience": 80,
+    "Level": 2
   },
-  "max_floor": 11,
-  "current_floor": 11,
-  "selected_class": 1,
+  "max_floor": 2,
+  "current_floor": 2,
+  "selected_class": 0,
   "available_buffs": [
     {
-      "name": "Main Stat Boost",
-      "amount": 2,
-      "speed_increase": 0
-    },
-    {
-      "name": "Attack Speed Boost",
-      "amount": 0,
-      "speed_increase": 0.05
-    },
-    {
-      "name": "Attack Speed Boost",
-      "amount": 0,
-      "speed_increase": 0.05
-    },
-    {
-      "name": "Attack Speed Boost",
-      "amount": 0,
-      "speed_increase": 0.05
-    },
-    {
-      "name": "Attack Speed Boost",
-      "amount": 0,
-      "speed_increase": 0.05
-    },
-    {
       "name": "Health Boost",
       "amount": 10,
-      "speed_increase": 0
-    },
-    {
-      "name": "Attack Speed Boost",
-      "amount": 0,
-      "speed_increase": 0.05
-    },
-    {
-      "name": "Health Boost",
-      "amount": 10,
-      "speed_increase": 0
-    },
-    {
-      "name": "Attack Speed Boost",
-      "amount": 0,
-      "speed_increase": 0.05
-    },
-    {
-      "name": "Main Stat Boost",
-      "amount": 2,
       "speed_increase": 0
     }
   ]

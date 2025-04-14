@@ -1,5 +1,7 @@
 package app
 
+import "fmt"
+
 type Enemy struct {
 	X, Y          int
 	ID            string
@@ -32,4 +34,29 @@ func removeEnemy(enemies []Enemy, id string) []Enemy {
 		}
 	}
 	return enemies
+}
+
+// Обработчик смерти врага
+func (g *Game) HandleEnemyDeath() {
+	if g.CurrentEnemy == nil {
+		return
+	}
+	g.CombatLog = append(g.CombatLog, fmt.Sprintf("%s defeated!", g.CurrentEnemy.Name))
+	levelUpMsg := g.Player.AddExperience(20, g)
+	if levelUpMsg != "" {
+		g.CombatLog = append(g.CombatLog, levelUpMsg)
+	}
+	fmt.Printf("Enemies before removal: %d\n", len(g.Enemies))
+	g.Enemies = removeEnemy(g.Enemies, g.CurrentEnemy.ID)
+	fmt.Printf("Enemies after removal: %d\n", len(g.Enemies))
+	g.CurrentEnemy = nil
+	g.State = Dungeon
+	if len(g.Enemies) == 0 {
+		newBuff := GetRandomBuff()
+		g.AvailableBuffs = append(g.AvailableBuffs, newBuff)
+		g.CombatLog = append(g.CombatLog, fmt.Sprintf("Received buff: %s", newBuff.Name()))
+		newBuff.Apply(&g.Player)
+	} else {
+		fmt.Printf("Buff not awarded, enemies remaining: %d\n", len(g.Enemies))
+	}
 }
