@@ -371,6 +371,8 @@ func (g *Game) drawInGameMenu(screen *ebiten.Image) {
 	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Int: %d", g.Player.Intelligence), 60, 230)
 	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("pDef: %d", g.Player.PhDefense), 60, 260)
 	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("mDef: %d", g.Player.MgDefense), 60, 290)
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("CritChance: %g%%", g.Player.GetTotalCritChance()), 60, 320)
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("CritDamage: %v%%", (g.Player.BaseCritDamage+g.Player.CritDamageBonus)*100), 60, 350)
 
 	// Бафы (справа от характеристик)
 	//buffsBg := ebiten.NewImage(300, 150) // Фон для бафов, можно будет попробовать добавить прокрутку, если бафов будет много
@@ -597,7 +599,7 @@ func (g *Game) drawCombat(screen *ebiten.Image) {
 	for i, log := range g.CombatLog {
 		ebitenutil.DebugPrintAt(screen, log, 50, yOffset+20*int(i))
 	}
-	if len(g.CombatLog) > 5 {
-		g.CombatLog = g.CombatLog[len(g.CombatLog)-5:]
+	if len(g.CombatLog) >= 6 {
+		g.CombatLog = g.CombatLog[1:]
 	}
 }

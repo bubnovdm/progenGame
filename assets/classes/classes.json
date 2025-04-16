@@ -7,7 +7,9 @@
       "agility": 5,
       "intelligence": 5,
       "ph_defense": 7,
-      "mg_defense": 3
+      "mg_defense": 3,
+      "crit_chance": 12.0,
+      "crit_damage": 1.7
     },
     "main_stat": "strength",
     "damage_type": "physical",
@@ -28,7 +30,9 @@
       "agility": 5,
       "intelligence": 10,
       "ph_defense": 3,
-      "mg_defense": 7
+      "mg_defense": 7,
+      "crit_chance": 10.0,
+      "crit_damage": 2.0
     },
     "main_stat": "intelligence",
     "damage_type": "magical",
@@ -49,7 +53,9 @@
       "agility": 10,
       "intelligence": 5,
       "ph_defense": 5,
-      "mg_defense": 5
+      "mg_defense": 5,
+      "crit_chance": 15.0,
+      "crit_damage": 1.5
     },
     "main_stat": "agility",
     "damage_type": "physical",

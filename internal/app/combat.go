@@ -30,7 +30,7 @@ func (g *Game) autoAttack() {
 		isCrit := g.Player.RollCrit()
 		effectiveDamage := int(float64(damage) * (100.0 / (100.0 + float64(defense))))
 		if isCrit {
-			effectiveDamage = int(float64(effectiveDamage) * g.Player.CritDamage)
+			effectiveDamage = int(float64(effectiveDamage) * (g.Player.BaseCritDamage + g.Player.CritDamageBonus))
 		}
 		if effectiveDamage < minimalAADamage {
 			effectiveDamage = minimalAADamage // Минимальный урон 3
@@ -93,6 +93,9 @@ func (g *Game) useAbility(ability string) {
 		fmt.Printf("Default damage: 10, Multiplier: %.2f\n", config.Multiplier) // Отладка
 	}
 
+	// Кидаем крть
+	isCrit := g.Player.RollCrit()
+
 	// Применяем защиту (если не игнорируется)
 	effectiveDamage := damage
 	if !config.IgnoreDefense {
@@ -107,7 +110,9 @@ func (g *Game) useAbility(ability string) {
 		}
 		effectiveDamage = int(float64(damage) * (100.0 / (100.0 + float64(defense))))
 	}
-
+	if isCrit {
+		effectiveDamage = int(float64(effectiveDamage) * (g.Player.BaseCritDamage + g.Player.CritDamageBonus))
+	}
 	if effectiveDamage < minimalSpellDamage {
 		effectiveDamage = minimalSpellDamage // Минимальный урон 3
 	}
@@ -122,6 +127,9 @@ func (g *Game) useAbility(ability string) {
 
 	// Проверяем дополнительные эффекты
 	if config.DotDuration > 0 {
+		//Кидаем крит
+		isCrit = g.Player.RollCrit()
+
 		var dotDamage int
 		switch g.Player.MainStat {
 		case StrengthStat:
@@ -145,6 +153,9 @@ func (g *Game) useAbility(ability string) {
 				defense = 0
 			}
 			dotDamage = int(float64(dotDamage) * (100.0 / (100.0 + float64(defense))) / config.DotDuration)
+		}
+		if isCrit {
+			dotDamage = int(float64(dotDamage) * (g.Player.BaseCritDamage + g.Player.CritDamageBonus))
 		}
 		if dotDamage < minimalDoTDamage {
 			dotDamage = minimalDoTDamage
@@ -175,6 +186,8 @@ func (g *Game) useAbility(ability string) {
 	if config.HitCount > 0 {
 		rapidDamage := effectiveDamage
 		if !config.IgnoreDefense {
+			//Кидаем крит
+			isCrit = g.Player.RollCrit()
 			var defense int
 			switch g.Player.DamageType {
 			case PhysicalDamage:
@@ -185,6 +198,9 @@ func (g *Game) useAbility(ability string) {
 				defense = 0
 			}
 			rapidDamage = int(float64(rapidDamage) * (100.0 / (100.0 + float64(defense))))
+		}
+		if isCrit {
+			rapidDamage = int(float64(rapidDamage) * (g.Player.BaseCritDamage + g.Player.CritDamageBonus))
 		}
 		if rapidDamage < 1 {
 			rapidDamage = 1

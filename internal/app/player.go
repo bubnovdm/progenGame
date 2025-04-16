@@ -34,8 +34,10 @@ type Player struct {
 	MainStat                     MainStat    // 16 байт
 	DamageType                   DamageType  // 16 байт
 	AutoAttackCooldownMultiplier float64     // 8 байт
-	CritChance                   float64     // 8 байт - шанс крита в %
-	CritDamage                   float64     // 8 байт - множитель крита (коэффициент)
+	BaseCritChance               float64     // 8 байт - шанс крита в %
+	BaseCritDamage               float64     // 8 байт - множитель крита (коэффициент)
+	CritChanceBonus              float64     // 8 байт - прибавка от бафов
+	CritDamageBonus              float64     // 8 байт - прибавка от бафов
 	HP                           uint16      // 2 байта
 	MaxHP                        uint16      // 2 байта
 	Strength                     uint16      // 2 байта
@@ -63,12 +65,14 @@ func NewPlayer(class PlayerClass, g *Game) Player {
 		classConfig = ClassConfig{
 			Type: class.String(),
 			BaseStats: ClassStats{
-				MaxHP:        120,
-				Strength:     10,
-				Agility:      5,
-				Intelligence: 5,
-				PhDefense:    7,
-				MgDefense:    3,
+				MaxHP:          120,
+				Strength:       10,
+				Agility:        5,
+				Intelligence:   5,
+				PhDefense:      7,
+				MgDefense:      3,
+				BaseCritChance: 12.0,
+				BaseCritDamage: 1.7,
 			},
 			MainStat:   StrengthStat,
 			DamageType: PhysicalDamage,
@@ -93,8 +97,8 @@ func NewPlayer(class PlayerClass, g *Game) Player {
 		X:                            1,
 		Y:                            1,
 		Inventory:                    []Item{},
-		CritChance:                   10.0 + float64(baseStats.Agility)*0.5, // Базовый шанс 10% + 0.5% за Ловкость
-		CritDamage:                   1.5,                                   // Базовый множитель 150%
+		BaseCritChance:               baseStats.BaseCritChance, // Базовый шанс + 0.5% за Ловкость
+		BaseCritDamage:               baseStats.BaseCritDamage, // Базовый множитель
 	}
 }
 
@@ -132,7 +136,7 @@ func (p *Player) LevelUp(g *Game) {
 	p.MgDefense += levelUpStats.MgDefense
 
 	// Пересчитываем CritChance с учётом нового значения Agility
-	p.CritChance = 10.0 + float64(p.Agility)*0.5
+	p.GetTotalCritChance()
 
 	// Убедимся, что HP не превышает MaxHP
 	if p.HP > p.MaxHP {
@@ -142,6 +146,14 @@ func (p *Player) LevelUp(g *Game) {
 
 // RollCrit возвращает true, если срабатывает критический удар
 func (p *Player) RollCrit() bool {
-	roll := rand.Float64() * 100 // Случайное число от 0 до 100
-	return roll <= p.CritChance
+	roll := rand.Float64() * 100
+	return roll <= p.GetTotalCritChance()
+}
+
+func (p *Player) GetTotalCritChance() float64 {
+	crit := p.BaseCritChance + float64(p.Agility)*0.5 + p.CritChanceBonus
+	if crit > 100.0 {
+		return 100.0
+	}
+	return crit
 }

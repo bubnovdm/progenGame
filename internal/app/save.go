@@ -65,12 +65,12 @@ func (g *Game) LoadGame() error {
 	g.Player.Class = saveData.SelectedClass
 
 	// Пересчитываем CritChance, если оно не было загружено (для старых сохранений)
-	if g.Player.CritChance == 0 {
-		g.Player.CritChance = 10.0 + float64(g.Player.Agility)*0.5
+	if g.Player.BaseCritChance == 0 {
+		g.Player.BaseCritChance = 10.0 + float64(g.Player.Agility)*0.5
 	}
 	// Устанавливаем CritDamage, если оно не было загружено
-	if g.Player.CritDamage == 0 {
-		g.Player.CritDamage = 1.5
+	if g.Player.BaseCritDamage == 0 {
+		g.Player.BaseCritDamage = 1.5
 	}
 
 	g.AvailableBuffs = make([]Buff, len(saveData.AvailableBuffs))

@@ -1,6 +1,8 @@
 package app
 
-import "math/rand"
+import (
+	"math/rand"
+)
 
 // Buff описывает пассивный постоянный баф
 type Buff interface {
@@ -64,12 +66,44 @@ func (b *AttackSpeedBuff) Name() string {
 	return "Attack Speed Boost"
 }
 
+// CritChanceBuff увеличивает шанс критического удара
+type CritChanceBuff struct {
+	critChanceIncrease float64
+}
+
+func (b *CritChanceBuff) Apply(player *Player) {
+	// Сейчас шанс крита 10% + 0.5% за Ловкость (10.0 + 0.5*float64(baseStats.Agility))
+	// Тут просто будем прибавлять по 3.0 за каждый стак (до 100%)
+	player.CritChanceBonus += b.critChanceIncrease
+	//Ограничим до 100% (потом ещё надо с ловкостью просчитать наверное)
+	/*
+		if player.CritChance > 100.0 {
+			player.CritChance = 100.0
+		}
+	*/
+}
+func (b *CritChanceBuff) Name() string { return "Crit Chance Boost" }
+
+// CritDamageBuff увеличивает крит урон
+type CritDamageBuff struct {
+	critDamageIncrease float64
+}
+
+func (b *CritDamageBuff) Apply(player *Player) {
+	// Сейчас крит урон 1.5
+	// Будем просто прибавлять по 0.1 к крит урону
+	player.CritDamageBonus += b.critDamageIncrease
+}
+func (b *CritDamageBuff) Name() string { return "Crit Damage Boost" }
+
 // GetRandomBuff возвращает случайный баф
 func GetRandomBuff() Buff {
 	buffs := []Buff{
-		&MainStatBuff{amount: 2},              // +2 к мейнстату
-		&HealthBuff{amount: 10},               // +10 к хп
-		&AttackSpeedBuff{speedIncrease: 0.05}, // 5% увеличение скорости
+		&MainStatBuff{amount: 2},                 // +2 к мейнстату
+		&HealthBuff{amount: 10},                  // +10 к хп
+		&AttackSpeedBuff{speedIncrease: 0.05},    // 5% увеличение скорости
+		&CritChanceBuff{critChanceIncrease: 3.0}, //+3% к шансу крита
+		&CritDamageBuff{critDamageIncrease: 0.1}, //+10% к крит урону
 	}
 	return buffs[rand.Intn(len(buffs))]
 }
@@ -79,6 +113,8 @@ type BuffData struct {
 	Name          string  `json:"name"`
 	Amount        uint16  `json:"amount"`
 	SpeedIncrease float64 `json:"speed_increase"`
+	CritChance    float64 `json:"crit_chance"`
+	CritDamage    float64 `json:"crit_damage"`
 }
 
 // ToBuffData конвертирует Buff в BuffData
@@ -91,6 +127,10 @@ func ToBuffData(buff Buff) BuffData {
 		data.Amount = b.amount
 	case *AttackSpeedBuff:
 		data.SpeedIncrease = b.speedIncrease
+	case *CritChanceBuff:
+		data.CritChance = b.critChanceIncrease
+	case *CritDamageBuff:
+		data.CritDamage = b.critDamageIncrease
 	}
 	return data
 }
@@ -104,6 +144,10 @@ func FromBuffData(data BuffData) Buff {
 		return &HealthBuff{amount: data.Amount}
 	case "Attack Speed Boost":
 		return &AttackSpeedBuff{speedIncrease: data.SpeedIncrease}
+	case "Crit Chance Boost":
+		return &CritChanceBuff{critChanceIncrease: data.CritChance}
+	case "Crit Damage Boost":
+		return &CritDamageBuff{critDamageIncrease: data.CritDamage}
 	default:
 		return nil // или дефолтный баф
 	}

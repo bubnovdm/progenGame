@@ -74,6 +74,7 @@ func (g *Game) Update() error {
 
 	// Обновляем кулдауны
 	g.updateCooldowns(dt)
+	//fmt.Println("Base:", g.Player.BaseCritChance, "| AGI Bonus:", float64(g.Player.Agility)*0.5, "| Extra:", g.Player.CritChanceBonus, "| → Total:", g.Player.GetTotalCritChance())
 
 	// Обработка эффектов на текущем враге
 	if g.CurrentEnemy != nil {
@@ -118,7 +119,7 @@ func (g *Game) Update() error {
 			if g.Player.HP <= 0 {
 				g.CombatLog = append(g.CombatLog, "Player defeated! Game Over.")
 				g.State = Menu
-				g.Player = NewPlayer(WarriorClass, g)
+				g.Player = NewPlayer(g.Player.Class, g)
 				g.CurrentEnemy = nil
 			}
 		}

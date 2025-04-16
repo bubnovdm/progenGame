@@ -8,12 +8,14 @@ import (
 
 // ClassStats описывает базовые характеристики класса
 type ClassStats struct {
-	MaxHP        uint16 `json:"max_hp"`
-	Strength     uint16 `json:"strength"`
-	Agility      uint16 `json:"agility"`
-	Intelligence uint16 `json:"intelligence"`
-	PhDefense    uint16 `json:"ph_defense"`
-	MgDefense    uint16 `json:"mg_defense"`
+	MaxHP          uint16  `json:"max_hp"`
+	Strength       uint16  `json:"strength"`
+	Agility        uint16  `json:"agility"`
+	Intelligence   uint16  `json:"intelligence"`
+	PhDefense      uint16  `json:"ph_defense"`
+	MgDefense      uint16  `json:"mg_defense"`
+	BaseCritChance float64 `json:"crit_chance"`
+	BaseCritDamage float64 `json:"crit_damage"`
 }
 
 type LevelUpStats struct {

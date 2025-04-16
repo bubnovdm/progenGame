@@ -32,7 +32,10 @@ func (g *Game) GetSortedDamageStats() []DamageStat {
 	for _, stat := range g.DamageStats {
 		stats = append(stats, *stat)
 	}
-	sort.Slice(stats, func(i, j int) bool {
+	sort.SliceStable(stats, func(i, j int) bool {
+		if stats[i].TotalDamage == stats[j].TotalDamage {
+			return stats[i].AbilityName < stats[j].AbilityName // Сортировка по имени при равном уроне
+		}
 		return stats[i].TotalDamage > stats[j].TotalDamage
 	})
 	return stats
